@@ -21,9 +21,9 @@ Options:
 
 import os
 import pandas as pd
+import socket
 import math
 import time
-import TabConvLearner
 
 #this source code from https://docs.python.org/3/howto/sockets.html
 
