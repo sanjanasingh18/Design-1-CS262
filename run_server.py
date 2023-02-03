@@ -26,12 +26,8 @@ import math
 import time
 
 #this source code from https://docs.python.org/3/howto/sockets.html
-
+"""
 class MySocket:
-    """demonstration class only
-      - coded for clarity, not efficiency
-    """
-
     def __init__(self, sock=None):
         if sock is None:
             self.sock = socket.socket(
@@ -60,19 +56,50 @@ class MySocket:
             chunks.append(chunk)
             bytes_recd = bytes_recd + len(chunk)
         return b''.join(chunks)
-
+"""
 # # create an INET, STREAMing socket
 # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # # now connect to the web server on port 80 - the normal http port
 # s.connect(("www.python.org", 80))
 
+def server_program():
+    # get the hostname
+    host = '0.0.0.0' #'10.250.0.1' # as both code is running on same pc
+    port = 8888  # initiate port no above 1024
+
+    server_socket = socket.socket()  # get instance
+    # look closely. The bind() function takes tuple as argument
+    server_socket.bind((host, port))  # bind host address and port together
+
+    # configure how many client the server can listen simultaneously
+    server_socket.listen(2)
+    conn, address = server_socket.accept()  # accept new connection
+    print("Connection from: " + str(address))
+    while True:
+        # receive data stream. it won't accept data packet greater than 1024 bytes
+        data = conn.recv(1024).decode()
+        if not data:
+            # if data is not received break
+            break
+        print("from connected user: " + str(data))
+        data = input(' -> ')
+        conn.send(data.encode())  # send data to the client
+
+    conn.close()  # close the connection
+
+
+if __name__ == '__main__':
+    server_program()
+
+"""
 
 # create an INET, STREAMing socket
 serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # bind the socket to a public host, and a well-known port
-serversocket.bind(('10.250.7.238', 80))
+serversocket.bind(('10.250.0.0', 8888))
 # become a server socket
 serversocket.listen(5)
+
 
 
 while True:
@@ -81,7 +108,7 @@ while True:
     # now do something with the clientsocket
     # in this case, we'll pretend this is a threaded server
     ct = client_thread(clientsocket)
-    ct.run()
+    ct.run()"""
 
 
 #copied this main from other code I have
