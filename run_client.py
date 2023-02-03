@@ -27,61 +27,94 @@ import time
 
 #this source code from https://docs.python.org/3/howto/sockets.html
 
-class MySocket:
-    """demonstration class only
-      - coded for clarity, not efficiency
-    """
+# class MySocket:
+#     """demonstration class only
+#       - coded for clarity, not efficiency
+#     """
 
-    def __init__(self, sock=None):
-        if sock is None:
-            self.sock = socket.socket(
-                            socket.AF_INET, socket.SOCK_STREAM)
-        else:
-            self.sock = sock
+#     def __init__(self, sock=None):
+#         if sock is None:
+#             self.sock = socket.socket(
+#                             socket.AF_INET, socket.SOCK_STREAM)
+#         else:
+#             self.sock = sock
 
-    def connect(self, host, port):
-        self.sock.connect((host, port))
+#     def connect(self, host, port):
+#         self.sock.connect((host, port))
 
-    def mysend(self, msg):
-        totalsent = 0
-        while totalsent < MSGLEN:
-            sent = self.sock.send(msg[totalsent:])
-            if sent == 0:
-                raise RuntimeError("socket connection broken")
-            totalsent = totalsent + sent
+#     def mysend(self, msg):
+#         totalsent = 0
+#         while totalsent < MSGLEN:
+#             sent = self.sock.send(msg[totalsent:])
+#             if sent == 0:
+#                 raise RuntimeError("socket connection broken")
+#             totalsent = totalsent + sent
 
-    def myreceive(self):
-        chunks = []
-        bytes_recd = 0
-        while bytes_recd < MSGLEN:
-            chunk = self.sock.recv(min(MSGLEN - bytes_recd, 2048))
-            if chunk == b'':
-                raise RuntimeError("socket connection broken")
-            chunks.append(chunk)
-            bytes_recd = bytes_recd + len(chunk)
-        return b''.join(chunks)
+#     def myreceive(self):
+#         chunks = []
+#         bytes_recd = 0
+#         while bytes_recd < MSGLEN:
+#             chunk = self.sock.recv(min(MSGLEN - bytes_recd, 2048))
+#             if chunk == b'':
+#                 raise RuntimeError("socket connection broken")
+#             chunks.append(chunk)
+#             bytes_recd = bytes_recd + len(chunk)
+#         return b''.join(chunks)
 
 # # create an INET, STREAMing socket
 # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # # now connect to the web server on port 80 - the normal http port
 # s.connect(("www.python.org", 80))
 
+def client_program():
+    host = '0.0.0.0'
+    port = 8888
 
-# create an INET, STREAMing socket
-serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# bind the socket to a public host, and a well-known port
-serversocket.bind((socket.gethostname(), 80))
-# become a server socket
-serversocket.listen(5)
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((host, port))
+
+    message = input('Type to send message to server: ')
+
+    while message.strip() != 'exit':
+        client.sendto(message.encode(), (host, port))
+        # client.send(message.encode())
+        data = client.recv(1024).decode()
+
+        print('Message from server: ' + data)
+        message = input('Reply to server: ')
+
+    print(f'Connection closed.')
+    client.close()
+
+    # while message.lower().strip() != 'bye':
+    #     client.send(message.encode())  # send message
+    #     data = client.recv(1024).decode()  # receive response
+
+    #     print('Received from server: ' + data)  # show in terminal
+
+    #     message = input(" -> ")  # again take input
+
+    # client.close()  # close the connection
+
+if __name__ == '__main__':
+    client_program()
 
 
-while True:
-    # accept connections from outside
-    (clientsocket, address) = serversocket.accept()
-    # now do something with the clientsocket
-    # in this case, we'll pretend this is a threaded server
-    ct = client_thread(clientsocket)
-    ct.run()
+# # create an INET, STREAMing socket
+# serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# # bind the socket to a public host, and a well-known port
+# serversocket.bind(('10.250.0.0', 8888))
+# # become a server socket
+# serversocket.listen(5)
+
+
+# while True:
+#     # accept connections from outside
+#     (clientsocket, address) = serversocket.accept()
+#     # now do something with the clientsocket
+#     # in this case, we'll pretend this is a threaded server
+#     ct = client_thread(clientsocket)
+#     ct.run()
 
 
 #copied this main from other code I have

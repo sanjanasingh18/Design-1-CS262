@@ -63,30 +63,28 @@ class MySocket:
 # s.connect(("www.python.org", 80))
 
 def server_program():
-    # get the hostname
-    host = '0.0.0.0' #'10.250.0.1' # as both code is running on same pc
-    port = 8888  # initiate port no above 1024
+    host = '0.0.0.0'
+    port = 8888
 
-    server_socket = socket.socket()  # get instance
-    # look closely. The bind() function takes tuple as argument
-    server_socket.bind((host, port))  # bind host address and port together
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((host, port))
 
-    # configure how many client the server can listen simultaneously
-    server_socket.listen(2)
-    conn, address = server_socket.accept()  # accept new connection
-    print("Connection from: " + str(address))
+    server.listen()
+    conn, addr = server.accept()
+
+    print(f'{addr} connected to server.')
     while True:
-        # receive data stream. it won't accept data packet greater than 1024 bytes
         data = conn.recv(1024).decode()
+
         if not data:
-            # if data is not received break
             break
-        print("from connected user: " + str(data))
-        data = input(' -> ')
-        conn.send(data.encode())  # send data to the client
 
-    conn.close()  # close the connection
+        print('Message from client: ' + data)
+        message = input('Reply to client: ')
+        conn.sendto(message.encode(), (host, port))
+        # conn.send(data.encode())
 
+    conn.close()
 
 if __name__ == '__main__':
     server_program()
