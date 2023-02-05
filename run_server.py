@@ -62,32 +62,80 @@ class MySocket:
 # # now connect to the web server on port 80 - the normal http port
 # s.connect(("www.python.org", 80))
 
-def server_program():
-    host = '0.0.0.0'
-    port = 8888
+class Server:
+    def __init__(self, sock=None):
+        #want to set up a server socket as we did with the sample code
+        #want to create a list of accounts for this server and unsent messages
 
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((host, port))
+        #format of account_list is [UUID: queue of messages not yet sent]
+        account_list = dict()
+        
+        if sock is None:
+            self.server = socket.socket(
+                            socket.AF_INET, socket.SOCK_STREAM)
+        else:
+            self.server = sock
 
-    server.listen()
-    conn, addr = server.accept()
+    
+    def server_program(self):
+        #changed to the 
+        #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        #used socket.gethostname() to get the host name to connect between
+        #computers
+        host = 'dhcp-10-250-7-238.harvard.edu'
+        print(host)
+        port = 8888
+        self.server.bind((host, port))
 
-    print(f'{addr} connected to server.')
-    while True:
-        data = conn.recv(1024).decode()
+        self.server.listen()
+        conn, addr = self.server.accept()
 
-        if not data:
-            break
+        print(f'{addr} connected to server.')
 
-        print('Message from client: ' + data)
-        message = input('Reply to client: ')
-        conn.sendto(message.encode(), (host, port))
-        # conn.send(data.encode())
+        message = 'temporary non-null input'
+        #want to see when we have to disconnect- revise this while loop 
+        #and break statement
+        while True:
+            #receive from client
+            data = conn.recv(1024).decode()
+            
+            #check if connection closed
+            if not data:
+                break
 
-    conn.close()
+            print('Message from client: ' + data)
+
+            #check if data equals 'login'
+            if data.lower().strip() == 'login':
+                message = 'Please enter your username (UUID)'
+                conn.sendto(message.encode(), (host, port))
+            elif data.lower().strip() == 'create':
+                # generate UUID and add to dictionary 
+                message = 'Your unique username is' + username
+                conn.sendto(message.encode(), (host, port))
+
+            else:
+                message = input('Reply to client: ')
+                conn.sendto(message.encode(), (host, port))
+        
+        #TODO- do not want to automatically disconnect once
+        #you have a client
+        #while server doesn't say to EXIT
+        print('Client has disconnected. Closing server.')
+        conn.close()
+    
+    def deliver_message():
+        #is the account logged in?
+        #if so, deliver immediately
+
+        #if not, add to queue 
+
+    def list_accounts(self):
+        print(account_list.keys())
 
 if __name__ == '__main__':
-    server_program()
+    a = Server()
+    a.server_program()
 
 """
 
