@@ -97,8 +97,12 @@ class Server:
         #check if this username exists- check if it is in the account_list, 
         if self.account_list.has_key(data.strip()):
             print('has key!')
+            message = 'Account has been identified. Thank you!'
+            conn.sendto(message.encode(), (host, port))
         else:
             # want to prompt the client to either try again or create account
+            message = 'Error'
+            conn.sendto(message.encode(), (host, port))
             print("key not found.")
 
     def server_program(self):

@@ -80,13 +80,16 @@ class ClientSocket:
   #helper function to create an account
   def create_client_username(self, message, host, port):
     self.client.sendto(message.encode(), (host, port))
-    #self.client.sendto(message.encode(), (host, port))
     data = self.client.recv(1024).decode()
 
     print(data)
 
   #helper function to login to a client account
-  def login_client_account(self, host, port):
+  def login_client_account(self, message, host, port):
+
+    #ensure that the server knows that it is the login function
+    self.client.sendto(message.encode(), (host, port))
+
     print("login client account")
     message = input("""
     Please enter your username to log in: 
@@ -95,12 +98,15 @@ class ClientSocket:
     self.client.sendto(message.encode(), (host, port))
 
     #will receive back confrmation that you logged in successfully
+    #want a while loop 
     data = self.client.recv(1024).decode()
-    if data:
+
+    if data == 'Account has been identified. Thank you!':
       #successfully logged in
       print("Successfully logged in.")
-
+      #
     else:
+      #
       print("Unsuccessfully logged in")
 
     #FILL IN BLANK HERE
@@ -135,7 +141,7 @@ class ClientSocket:
 
         #login function
         if message.lower().strip() == 'login':
-          self.login_client_account(host, port)
+          self.login_client_account(message, host, port)
           have_logged_in = True
 
         #create function
@@ -155,7 +161,7 @@ class ClientSocket:
       #you can only access this loop if you have logged in- if you aren't logged in then you exited
       if have_logged_in:
         #now, allow the client + server to interact until it says to exit
-        message = input('Reply to server1: ')
+        message = input('Reply to server: ')
         
         #continue 
         while message.strip() != 'exit':
@@ -172,11 +178,8 @@ class ClientSocket:
     # while message.lower().strip() != 'bye':
     #     client.send(message.encode())  # send message
     #     data = client.recv(1024).decode()  # receive response
-
     #     print('Received from server: ' + data)  # show in terminal
-
     #     message = input(" -> ")  # again take input
-
     # client.close()  # close the connection
 
 if __name__ == '__main__':
