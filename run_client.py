@@ -5,9 +5,7 @@ import math
 import time
 import uuid
 
-
 #this source code from https://docs.python.org/3/howto/sockets.html
-
 
 class ClientSocket:
   # add an is_logged_in object for the account
