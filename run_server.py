@@ -8,6 +8,8 @@ import uuid
 #this source code from https://docs.python.org/3/howto/sockets.html
 
 class Server:
+    curr_user = ''
+
     def __init__(self, sock=None):
         #want to set up a server socket as we did with the sample code
         #want to create a list of accounts for this server and unsent messages
@@ -26,12 +28,13 @@ class Server:
         # server will generate UUID, print UUID, send info to client, and then add it to the dict
         username = uuid.uuid4()
         print("Unique username generated for client is "+ str(username) + ". Waiting on message from client.")
-        message = 'Your unique username is ' + str(username)
+        message = str(username)
         conn.sendto(message.encode(), (host, port))
 
         # add (username: empty list) to dictionary
         # empty list will eventually hold the queue of messages
-        self.account_list[str(username)] = []
+        self.account_list[message] = []
+        curr_user = message
 
     #function to log in to an account
     def login_account(self, host, port, conn, data):
@@ -48,6 +51,21 @@ class Server:
             print("key not found.")
             message = 'Error'
             conn.sendto(message.encode(), (host, port))
+
+    def delete_account(self, host, port, conn):
+        #TODO make protocol buffer so that every time a client send a message we send their UUID and their message
+        data = conn.recv(1024).decode()
+        if data == 'delete':
+            if curr_user in self.account_list:
+                del self.account_list[curr_user]
+                print("Successfully deleted client account")
+                message = 'Account successfully deleted.'
+                conn.sendto(message.encode(), (host, port))
+            else:
+                # want to prompt the client to either try again or create account
+                print("key not found.")
+                message = 'Error deleting account'
+                conn.sendto(message.encode(), (host, port))
 
     def server_program(self):
         #changed to the 
@@ -72,8 +90,8 @@ class Server:
             data = conn.recv(1024).decode()
             
             #check if connection closed
-            if not data:
-                break
+            # if not data:
+            #     break
 
             print('Message from client: ' + data)
 
@@ -83,8 +101,12 @@ class Server:
                 self.login_account(host, port, conn, data)
             elif data.lower().strip() == 'create':
                 self.create_username(host, port, conn)
+            elif data.lower().strip() == 'delete':
+                self.delete_account(host, port, conn)
             else:
                 message = input('Reply to client: ')
+                if message.lower().strip() == 'exit':
+                    break
                 conn.sendto(message.encode(), (host, port))
         
         #TODO- do not want to automatically disconnect once
