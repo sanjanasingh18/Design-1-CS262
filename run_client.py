@@ -31,6 +31,8 @@ import uuid
 
 
 class ClientSocket:
+  # add an is_logged_in object for the account
+  is_logged_in = False
 
   def __init__(self, client=None):
     if client is None:
@@ -99,7 +101,16 @@ class ClientSocket:
 
 
 
+  def delete_client_account(self, host, port):
+    message = 'delete'
+    self.client.sendto(message.encode(), (host, port))
+    data = self.client.recv(1024).decode()
 
+    if data == 'Account successfully deleted.':
+      is_logged_in = False
+      print("Successfully deleted account and logged out.")
+    else:
+      print("Unsuccessfully deleted account.")
 
   def client_program(self):
       # host = socket.
@@ -149,12 +160,15 @@ class ClientSocket:
         
         #continue 
         while message.strip() != 'exit':
-          #somehow have a bug where it will do create twice
-            self.client.sendto(message.encode(), (host, port))
-            data = self.client.recv(1024).decode()
+          #delete account function
+          if message.lower().strip() == 'delete my account':
+            self.delete_client_account(host, port)
 
-            print('Message from server: ' + data)
-            message = input('Reply to server: ')
+          self.client.sendto(message.encode(), (host, port))
+          data = self.client.recv(1024).decode()
+
+          print('Message from server: ' + data)
+          message = input('Reply to server: ')
 
         print(f'Connection closed.')
         self.client.close()
