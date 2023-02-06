@@ -130,6 +130,7 @@ class ClientSocket:
         Welcome!
         Type 'login' to log into your account.
         Type 'create' to create a new account.
+        Type 'exit' to disconnect from server.
         """)
 
         #login function
@@ -142,21 +143,31 @@ class ClientSocket:
           print("create_client")
           self.create_client_username(message, host, port)
           have_logged_in = True
+        
+        #exit function- may want to exit early
+        elif message.lower().strip() == 'exit':
+          print(f'Connection closed.')
+          self.client.close()
+          break
+        
+        #if it is none of these key words, it will re query until you enter 'login' or 'create'
 
-      #now, allow the client + server to interact until it says to exit
-      message = input('Reply to server1: ')
-      
-      #continue 
-      while message.strip() != 'exit':
-        #somehow have a bug where it will do create twice
-          self.client.sendto(message.encode(), (host, port))
-          data = self.client.recv(1024).decode()
+      #you can only access this loop if you have logged in- if you aren't logged in then you exited
+      if have_logged_in:
+        #now, allow the client + server to interact until it says to exit
+        message = input('Reply to server1: ')
+        
+        #continue 
+        while message.strip() != 'exit':
+          #somehow have a bug where it will do create twice
+            self.client.sendto(message.encode(), (host, port))
+            data = self.client.recv(1024).decode()
 
-          print('Message from server: ' + data)
-          message = input('Reply to server: ')
+            print('Message from server: ' + data)
+            message = input('Reply to server: ')
 
-      print(f'Connection closed.')
-      self.client.close()
+        print(f'Connection closed.')
+        self.client.close()
 
     # while message.lower().strip() != 'bye':
     #     client.send(message.encode())  # send message
