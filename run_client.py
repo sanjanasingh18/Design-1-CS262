@@ -66,25 +66,49 @@ import time
 # # now connect to the web server on port 80 - the normal http port
 # s.connect(("www.python.org", 80))
 
-def client_program():
-    host = '0.0.0.0'
-    port = 8888
+class ClientSocket:
 
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((host, port))
+  def __init__(self, client=None):
+    if client is None:
+      self.client = socket.socket(
+                        socket.AF_INET, socket.SOCK_STREAM)
+    else:
+      self.client = client
 
-    message = input('Type to send message to server: ')
+  def client_program(self):
+      # host = socket.
+      host = 'dhcp-10-250-7-238.harvard.edu'
+      port = 8888
 
-    while message.strip() != 'exit':
-        client.sendto(message.encode(), (host, port))
-        # client.send(message.encode())
-        data = client.recv(1024).decode()
+      # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+      # client.connect((host, port))
+      self.client.connect((host, port))
 
-        print('Message from server: ' + data)
-        message = input('Reply to server: ')
+      message = input("""
+                      Welcome!
+                      Type login to log into your account
+                      Type create to create a new account 
+                      """)
+      
+      if message.lower().strip() == 'login':
+        message = input("""
+                      Please enter your username to log in: 
+                      """)
+      elif message.lower().strip() == 'create':
+        self.client.sendto(message.encode(), (host, port))
+        data = self.client.recv(1024).decode()
+        print('Your unique username is: ' + data)
 
-    print(f'Connection closed.')
-    client.close()
+      while message.strip() != 'exit':
+          self.client.sendto(message.encode(), (host, port))
+          # client.send(message.encode())
+          data = self.client.recv(1024).decode()
+
+          print('Message from server: ' + data)
+          message = input('Reply to server: ')
+
+      print(f'Connection closed.')
+      self.client.close()
 
     # while message.lower().strip() != 'bye':
     #     client.send(message.encode())  # send message
@@ -97,7 +121,8 @@ def client_program():
     # client.close()  # close the connection
 
 if __name__ == '__main__':
-    client_program()
+  socket = ClientSocket()
+  socket.client_program()
 
 
 # # create an INET, STREAMing socket
