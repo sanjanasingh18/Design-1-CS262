@@ -37,7 +37,7 @@ class Server:
         curr_user = message
 
     #function to log in to an account
-    def login_account(self, host, port, conn, data):
+    def login_account(self, host, port, conn):
         #message = 'Please enter your username (UUID)'
         #conn.sendto(message.encode(), (host, port))
         #check if this username exists- check if it is in the account_list, 
@@ -98,7 +98,7 @@ class Server:
             #check if data equals 'login'
             if data.lower().strip() == 'login':
                 print('server login')
-                self.login_account(host, port, conn, data)
+                self.login_account(host, port, conn)
             elif data.lower().strip() == 'create':
                 self.create_username(host, port, conn)
             elif data.lower().strip() == 'delete':
