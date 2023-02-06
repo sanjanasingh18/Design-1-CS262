@@ -92,18 +92,19 @@ class Server:
 
     #function to log in to an account
     def login_account(self, host, port, conn, data):
-        message = 'Please enter your username (UUID)'
-        conn.sendto(message.encode(), (host, port))
+        #message = 'Please enter your username (UUID)'
+        #conn.sendto(message.encode(), (host, port))
         #check if this username exists- check if it is in the account_list, 
-        if self.account_list.has_key(data.strip()):
+        data = conn.recv(1024).decode()
+        if data.strip() in self.account_list:
             print('has key!')
             message = 'Account has been identified. Thank you!'
             conn.sendto(message.encode(), (host, port))
         else:
             # want to prompt the client to either try again or create account
+            print("key not found.")
             message = 'Error'
             conn.sendto(message.encode(), (host, port))
-            print("key not found.")
 
     def server_program(self):
         #changed to the 
@@ -135,9 +136,9 @@ class Server:
 
             #check if data equals 'login'
             if data.lower().strip() == 'login':
+                print('server login')
                 self.login_account(host, port, conn, data)
             elif data.lower().strip() == 'create':
-                print("server create")
                 self.create_username(host, port, conn)
             else:
                 message = input('Reply to client: ')
@@ -181,35 +182,3 @@ while True:
     ct = client_thread(clientsocket)
     ct.run()"""
 
-
-#copied this main from other code I have
-"""
-if __name__ == '__main__':
-
-    arguments = docopt(__doc__)        
-    ###Grab image directory
-    image_dir = arguments['<image_dir>']
-    
-    ###Load imaging model
-    mdl_path = arguments['<model_path>']
-
-    ###set model architecture
-    m = arguments['--modelarch'].lower()
-    
-    ###Read tabular data
-    output_df = pd.read_csv(arguments['<data_frame>'])
-    
-    #Read target variable
-    col = arguments['--target']
-        
-    # Split dataset
-    if(arguments["--split"]!="False"):
-        output_df = output_df.loc[output_df.Dataset=="Te",]
-    
-    # Create imagelist
-    imgs = (ImageList.from_df(df=output_df,path=image_dir)
-                                .split_none()
-                                .label_from_df(cols=col)
-                                .transform(tfms_test,size=224)
-                                .databunch(num_workers = num_workers,bs=bs).normalize(imagenet_stats))
-"""

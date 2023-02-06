@@ -29,44 +29,6 @@ import uuid
 
 #this source code from https://docs.python.org/3/howto/sockets.html
 
-# class MySocket:
-#     """demonstration class only
-#       - coded for clarity, not efficiency
-#     """
-
-#     def __init__(self, sock=None):
-#         if sock is None:
-#             self.sock = socket.socket(
-#                             socket.AF_INET, socket.SOCK_STREAM)
-#         else:
-#             self.sock = sock
-
-#     def connect(self, host, port):
-#         self.sock.connect((host, port))
-
-#     def mysend(self, msg):
-#         totalsent = 0
-#         while totalsent < MSGLEN:
-#             sent = self.sock.send(msg[totalsent:])
-#             if sent == 0:
-#                 raise RuntimeError("socket connection broken")
-#             totalsent = totalsent + sent
-
-#     def myreceive(self):
-#         chunks = []
-#         bytes_recd = 0
-#         while bytes_recd < MSGLEN:
-#             chunk = self.sock.recv(min(MSGLEN - bytes_recd, 2048))
-#             if chunk == b'':
-#                 raise RuntimeError("socket connection broken")
-#             chunks.append(chunk)
-#             bytes_recd = bytes_recd + len(chunk)
-#         return b''.join(chunks)
-
-# # create an INET, STREAMing socket
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# # now connect to the web server on port 80 - the normal http port
-# s.connect(("www.python.org", 80))
 
 class ClientSocket:
 
@@ -98,22 +60,44 @@ class ClientSocket:
     self.client.sendto(message.encode(), (host, port))
 
     #will receive back confrmation that you logged in successfully
-    #want a while loop 
     data = self.client.recv(1024).decode()
 
-    if data == 'Account has been identified. Thank you!':
-      #successfully logged in
-      print("Successfully logged in.")
-      #
-    else:
-      #
-      print("Unsuccessfully logged in")
+    while data != 'Account has been identified. Thank you!':
+      
+      #allow them to exit
 
-    #FILL IN BLANK HERE
+      #print("Unsuccessfully logged in")
+      message = input("""We were unable to find an account associated with that username.
+      Please type either 'create' to create a new account,
+      'exit' to close the server connection, 
+      or re-enter your username.
+      """)
+      #exit- close the connection
+      if message.lower().strip() == 'exit':
+        print(f'Connection closed.')
+        self.client.close()
+        break
+      elif message.lower().strip() == 'create':
+        self.create_client_username(message, host, port)
+        break
+      else: 
+        #requery the client to see if this was a successful username
+        #send over the username to the client
+        self.client.sendto(message.encode(), (host, port))
+        
+        #will receive back confrmation that you logged in successfully
+        data = self.client.recv(1024).decode()
+
+        #print("Successfully logged in")
+        #if data == 'Account has been identified. Thank you!':
+        #  #successfully logged in
+        #  print("Successfully logged in.")
+      
+        #else: #means there was an error
+        #
+        #  print("Unsuccessfully logged in")
 
 
-    #also will need to update the value of message so you do not end up
-    #with issues
 
 
 
@@ -175,63 +159,7 @@ class ClientSocket:
         print(f'Connection closed.')
         self.client.close()
 
-    # while message.lower().strip() != 'bye':
-    #     client.send(message.encode())  # send message
-    #     data = client.recv(1024).decode()  # receive response
-    #     print('Received from server: ' + data)  # show in terminal
-    #     message = input(" -> ")  # again take input
-    # client.close()  # close the connection
 
 if __name__ == '__main__':
   socket = ClientSocket()
   socket.client_program()
-
-
-# # create an INET, STREAMing socket
-# serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# # bind the socket to a public host, and a well-known port
-# serversocket.bind(('10.250.0.0', 8888))
-# # become a server socket
-# serversocket.listen(5)
-
-
-# while True:
-#     # accept connections from outside
-#     (clientsocket, address) = serversocket.accept()
-#     # now do something with the clientsocket
-#     # in this case, we'll pretend this is a threaded server
-#     ct = client_thread(clientsocket)
-#     ct.run()
-
-
-#copied this main from other code I have
-"""
-if __name__ == '__main__':
-
-    arguments = docopt(__doc__)        
-    ###Grab image directory
-    image_dir = arguments['<image_dir>']
-    
-    ###Load imaging model
-    mdl_path = arguments['<model_path>']
-
-    ###set model architecture
-    m = arguments['--modelarch'].lower()
-    
-    ###Read tabular data
-    output_df = pd.read_csv(arguments['<data_frame>'])
-    
-    #Read target variable
-    col = arguments['--target']
-        
-    # Split dataset
-    if(arguments["--split"]!="False"):
-        output_df = output_df.loc[output_df.Dataset=="Te",]
-    
-    # Create imagelist
-    imgs = (ImageList.from_df(df=output_df,path=image_dir)
-                                .split_none()
-                                .label_from_df(cols=col)
-                                .transform(tfms_test,size=224)
-                                .databunch(num_workers = num_workers,bs=bs).normalize(imagenet_stats))
-"""
