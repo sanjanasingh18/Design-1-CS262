@@ -15,7 +15,7 @@ class Server:
         #want to create a list of accounts for this server and unsent messages
 
         #format of account_list is [UUID: queue of messages not yet sent]
-        self.account_list = dict()
+        self.account_list = dict() #['abc'] 
         
         if sock is None:
             self.server = socket.socket(
@@ -42,7 +42,8 @@ class Server:
         #conn.sendto(message.encode(), (host, port))
         #check if this username exists- check if it is in the account_list, 
         data = conn.recv(1024).decode()
-        if data.strip() in self.account_list:
+        #workaround with the login bug
+        if data.strip() or data.strip()[5:] in self.account_list:
             print('has key!')
             message = 'Account has been identified. Thank you!'
             conn.sendto(message.encode(), (host, port))
@@ -74,46 +75,51 @@ class Server:
         #computers
         host = 'dhcp-10-250-7-238.harvard.edu'
         print(host)
-        port = 8884
+        port = 8883
         self.server.bind((host, port))
 
-        self.server.listen()
-        conn, addr = self.server.accept()
-
-        print(f'{addr} connected to server.')
-
-        message = 'temporary non-null input'
-        #want to see when we have to disconnect- revise this while loop 
-        #and break statement
+        #while SOMETHING, listen!
         while True:
-            #receive from client
-            data = conn.recv(1024).decode()
-            
-            #check if connection closed
-            # if not data:
-            #     break
+            self.server.listen()
+            conn, addr = self.server.accept()
 
-            print('Message from client: ' + data)
+            print(f'{addr} connected to server.')
 
-            #check if data equals 'login'
-            if data.lower().strip() == 'login':
-                print('server login')
-                self.login_account(host, port, conn)
-            elif data.lower().strip() == 'create':
-                self.create_username(host, port, conn)
-            elif data.lower().strip() == 'delete':
-                self.delete_account(host, port, conn)
-            else:
-                message = input('Reply to client: ')
-                if message.lower().strip() == 'exit':
+            #want to see when we have to disconnect- revise this while loop 
+            #and break statement
+            while True:
+                #receive from client
+                data = conn.recv(1024).decode()
+                
+                #check if connection closed
+                if not data:
                     break
-                conn.sendto(message.encode(), (host, port))
-        
+
+                print('Message from client: ' + data)
+
+                #check if data equals 'login'
+                if data.lower().strip() == 'login':
+                    print('server login')
+                    self.login_account(host, port, conn)
+                elif data.lower().strip() == 'create':
+                    self.create_username(host, port, conn)
+                elif data.lower().strip() == 'delete':
+                    self.delete_account(host, port, conn)
+                else:
+                    message = input('Reply to client: ')
+                    conn.sendto(message.encode(), (host, port))
+            
+            #need to continuously scan for 'exit' to exit the server. TODO- fix this
+            message = input("Type 'exit' to close the server or press enter to continue")
+            if message.lower().strip() == 'exit':
+                print('You have successfully closed the server.')
+                conn.close()
+                break
+            
         #TODO- do not want to automatically disconnect once
         #you have a client
         #while server doesn't say to EXIT
-        print('Client has disconnected. Closing server.')
-        conn.close()
+
     
     def deliver_message():
         #is the account logged in?

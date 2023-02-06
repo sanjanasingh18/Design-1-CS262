@@ -76,11 +76,9 @@ class ClientSocket:
         #requery the client to see if this was a successful username
         #send over the username to the client
         #prompt the server to look again for login
-        inform_status = 'login'
+        inform_status = 'login' + message
         self.client.sendto(inform_status.encode(), (host, port))
 
-        self.client.sendto(message.encode(), (host, port))
-        
         #will receive back confrmation that you logged in successfully
         data = self.client.recv(1024).decode()
     
@@ -88,14 +86,7 @@ class ClientSocket:
     if data == 'Account has been identified. Thank you!':
       print("Successfully logged in.")
       self.logged_in = True
-    
-        #if data == 'Account has been identified. Thank you!':
-        #  #successfully logged in
-        #  print("Successfully logged in.")
-      
-        #else: #means there was an error
-        #
-        #  print("Unsuccessfully logged in")
+
 
 
 
@@ -113,7 +104,7 @@ class ClientSocket:
   def client_program(self):
       # host = socket.
       host = 'dhcp-10-250-7-238.harvard.edu'
-      port = 8884
+      port = 8883
 
       # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       # client.connect((host, port))
@@ -132,7 +123,7 @@ class ClientSocket:
         """)
 
         #login function
-        if message.lower().strip() == 'login':
+        if message.lower().strip()[:5] == 'login':
           self.login_client_account(message, host, port)
           break
 
