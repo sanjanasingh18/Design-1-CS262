@@ -77,48 +77,66 @@ class ClientSocket:
     else:
       self.client = client
 
+  #helper function to create an account
+  def create_client_username(self, host, port, conn):
+    self.client.sendto(message.encode(), (host, port))
+    data = self.client.recv(1024).decode()
+    print(data)
+    message = input('Reply to server: ')
+
+def login_client_account(self, host, port, conn):
+  message = input("""
+  Please enter your username to log in: 
+  """)
+  #send over the username to the client
+  self.client.sendto(message.encode(), (host, port))
+  #want to receive back confrmation that you logged in successfully
+  #will need to decode that
+
+  #FILL IN BLANK HERE
+
+
+  #also will need to update the value of message so you do not end up
+  #with issues
+  message = input('Reply to server: ')
+  have_logged_in = True
+
+
   def client_program(self):
       # host = socket.
       host = 'dhcp-10-250-7-238.harvard.edu'
-      port = 8888
+      port = 8886
 
       # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       # client.connect((host, port))
       self.client.connect((host, port))
 
+      #handle initial information flow- either will login or create a new account
       message = input("""
-                      Welcome!
-                      Type login to log into your account
-                      Type create to create a new account 
-                      """)
+      Welcome!
+      Type 'login' to log into your account.
+      Type 'create' to create a new account.
+      """)
       
-      #LATE NIGHT HYPOTHESIS- I THIK WE SHOULD ADD THESE ELIFS TO THE 
-      #WHILE STATEMENT
-      #CAN YOU CREATE AN ACCOUNT ONCE YOURE ALREADY LOGGED IN?
-      #CAN YOU LOG IN ONCE YOUVE CREATED AN ACCOUNT?
-      #WHAT IS THE INFO FLOW?
-      #
-      
-      if message.lower().strip() == 'login':
+      #You need to either log in or create first
+      have_logged_in = False
+      while not have_logged_in:
+        #handle initial information flow- either will login or create a new account
         message = input("""
-                      Please enter your username to log in: 
-                      """)
-        self.client.sendto(message.encode(), (host, port))
-        #want to receive back confrmation that you logged in successfully
-        #will need to decode that
+        Welcome!
+        Type 'login' to log into your account.
+        Type 'create' to create a new account.
+        """)
 
-        #FILL IN BLANK HERE
+        #login function
+        if message.lower().strip() == 'login':
 
 
-        #also will need to update the value of message so you do not end up
-        #with issues
-        message = input('Reply to server: ')
+        #create function
+        elif message.lower().strip() == 'create':
+          self.create_username(host, port, conn)
+          have_logged_in = True
 
-      elif message.lower().strip() == 'create':
-        self.client.sendto(message.encode(), (host, port))
-        data = self.client.recv(1024).decode()
-        print(data)
-        message = input('Reply to server: ')
 
       while message.strip() != 'exit':
         #somehow have a bug where it will do create twice

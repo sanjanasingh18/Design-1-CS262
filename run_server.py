@@ -70,7 +70,7 @@ class Server:
         #want to create a list of accounts for this server and unsent messages
 
         #format of account_list is [UUID: queue of messages not yet sent]
-        account_list = dict()
+        self.account_list = dict()
         
         if sock is None:
             self.server = socket.socket(
@@ -78,7 +78,29 @@ class Server:
         else:
             self.server = sock
 
-    
+    #function we use to create an account/username for a new user
+    def create_username(self, host, port, conn):
+        # server will generate UUID, print UUID, send info to client, and then add it to the dict
+        username = uuid.uuid4()
+        print("Unique username generated for client is "+ str(username) + ". Waiting on message from client.")
+        message = 'Your unique username is ' + str(username)
+        conn.sendto(message.encode(), (host, port))
+
+        # add (username: empty list) to dictionary
+        # empty list will eventually hold the queue of messages
+        self.account_list[str(username)] = []
+
+    #function to log in to an account
+    def login_account(self, host, port, conn, data):
+        message = 'Please enter your username (UUID)'
+        conn.sendto(message.encode(), (host, port))
+        #check if this username exists- check if it is in the account_list, 
+        if self.account_list.has_key(data.strip()):
+            print('has key!')
+        else:
+            # want to prompt the client to either try again or create account
+            print("key not found.")
+
     def server_program(self):
         #changed to the 
         #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -86,7 +108,7 @@ class Server:
         #computers
         host = 'dhcp-10-250-7-238.harvard.edu'
         print(host)
-        port = 8888
+        port = 8886
         self.server.bind((host, port))
 
         self.server.listen()
@@ -109,15 +131,9 @@ class Server:
 
             #check if data equals 'login'
             if data.lower().strip() == 'login':
-                message = 'Please enter your username (UUID)'
-                conn.sendto(message.encode(), (host, port))
+                self.login_account(host, port, conn, data)
             elif data.lower().strip() == 'create':
-                # generate UUID and add to dictionary 
-                username = uuid.uuid4()
-                message = 'Your unique username is ' + str(username)
-                conn.sendto(message.encode(), (host, port))
-                #todo- add it to dictionary
-
+                self.create_username(host, port, conn)
             else:
                 message = input('Reply to client: ')
                 conn.sendto(message.encode(), (host, port))
