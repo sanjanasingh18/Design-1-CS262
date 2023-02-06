@@ -24,6 +24,8 @@ import pandas as pd
 import socket
 import math
 import time
+import uuid
+
 
 #this source code from https://docs.python.org/3/howto/sockets.html
 
@@ -90,16 +92,36 @@ class ClientSocket:
                       Type create to create a new account 
                       """)
       
+      #LATE NIGHT HYPOTHESIS- I THIK WE SHOULD ADD THESE ELIFS TO THE 
+      #WHILE STATEMENT
+      #CAN YOU CREATE AN ACCOUNT ONCE YOURE ALREADY LOGGED IN?
+      #CAN YOU LOG IN ONCE YOUVE CREATED AN ACCOUNT?
+      #WHAT IS THE INFO FLOW?
+      #
+      
       if message.lower().strip() == 'login':
         message = input("""
                       Please enter your username to log in: 
                       """)
+        self.client.sendto(message.encode(), (host, port))
+        #want to receive back confrmation that you logged in successfully
+        #will need to decode that
+
+        #FILL IN BLANK HERE
+
+
+        #also will need to update the value of message so you do not end up
+        #with issues
+        message = input('Reply to server: ')
+
       elif message.lower().strip() == 'create':
         self.client.sendto(message.encode(), (host, port))
         data = self.client.recv(1024).decode()
-        print('Your unique username is: ' + data)
+        print(data)
+        message = input('Reply to server: ')
 
       while message.strip() != 'exit':
+        #somehow have a bug where it will do create twice
           self.client.sendto(message.encode(), (host, port))
           # client.send(message.encode())
           data = self.client.recv(1024).decode()

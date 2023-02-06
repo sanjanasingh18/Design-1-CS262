@@ -24,6 +24,8 @@ import pandas as pd
 import socket
 import math
 import time
+import uuid
+
 
 #this source code from https://docs.python.org/3/howto/sockets.html
 """
@@ -111,8 +113,10 @@ class Server:
                 conn.sendto(message.encode(), (host, port))
             elif data.lower().strip() == 'create':
                 # generate UUID and add to dictionary 
-                message = 'Your unique username is' + username
+                username = uuid.uuid4()
+                message = 'Your unique username is ' + str(username)
                 conn.sendto(message.encode(), (host, port))
+                #todo- add it to dictionary
 
             else:
                 message = input('Reply to client: ')
@@ -127,7 +131,7 @@ class Server:
     def deliver_message():
         #is the account logged in?
         #if so, deliver immediately
-
+        print('delivered')
         #if not, add to queue 
 
     def list_accounts(self):
