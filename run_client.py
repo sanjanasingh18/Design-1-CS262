@@ -1,24 +1,3 @@
-"""Main testing script for the composite outcome experiment. Purpose is to determine whether using composite outcomes improves DL performance for prognosis
-
-Usage:
-  run_mixed.py <image_dir> <model_path> <data_frame> <output_file> [--TTA] [--mixedLayers=MIXEDLAYERS] [--conv=CONV] [--cont=CONT] [--cat=CAT] [--modelarch=MODELARCH] [--type=TYPE] [--target=TARGET] [--split=SPLIT] [--layers=LAYERS]
-  run_mixed.py (-h | --help)
-Examples:
-  run_mixed.py /path/to/images /path/to/model /path/to/write/output.csv
-Options:
-  -h --help                     Show this screen.
-  --modelarch=MODELARCH         CNN model architecture to train [default: inceptionv4]
-  --type=TYPE                   Type of output [default: Discrete]
-  --target=TARGET               If optional df is specified, then need to include the target variable [default: None]
-  --split=SPLIT                 If split, then split on the Dataset column keeping only the Te values [default: False]
-  --cont=CONT                   List of continuous variables to include in the tabular learner [default: None]
-  --cat=CAT                     List of categorical variables to include in the tabular learner [default: None]
-  --layers=LAYERS               Tabular layers [default: 32,32]
-  --mixedLayers=MIXEDLAYERS     Mixed layers at the end of the network [default: 64,32,32,2]
-  --conv=CONV                   Number of features produced by the CNN [default: 32]
-  --TTA
-"""
-
 import os
 import pandas as pd
 import socket
@@ -172,7 +151,6 @@ class ClientSocket:
 
         print(f'Connection closed.')
         self.client.close()
-
 
 if __name__ == '__main__':
   socket = ClientSocket()
