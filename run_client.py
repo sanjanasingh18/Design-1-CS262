@@ -84,7 +84,6 @@ class ClientSocket:
     data = self.client.recv(1024).decode()
 
     print(data)
-    message = input('Reply to server: ')
 
   #helper function to login to a client account
   def login_client_account(self, host, port):
@@ -109,8 +108,7 @@ class ClientSocket:
 
     #also will need to update the value of message so you do not end up
     #with issues
-    message = input('Reply to server: ')
-    have_logged_in = True
+
 
 
   def client_program(self):
