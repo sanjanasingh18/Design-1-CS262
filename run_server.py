@@ -108,7 +108,7 @@ class Server:
         #computers
         host = 'dhcp-10-250-7-238.harvard.edu'
         print(host)
-        port = 8886
+        port = 8884
         self.server.bind((host, port))
 
         self.server.listen()
@@ -133,6 +133,7 @@ class Server:
             if data.lower().strip() == 'login':
                 self.login_account(host, port, conn, data)
             elif data.lower().strip() == 'create':
+                print("server create")
                 self.create_username(host, port, conn)
             else:
                 message = input('Reply to client: ')
