@@ -43,8 +43,8 @@ class Server:
         #check if this username exists- check if it is in the account_list, 
         data = conn.recv(1024).decode()
         #workaround with the login bug
-        if data.strip() or data.strip()[5:] in self.account_list:
-            print('has key!')
+        if (data.strip() in self.account_list) or (data.strip()[5:] in self.account_list):
+            print('has key!', self.account_list)
             message = 'Account has been identified. Thank you!'
             conn.sendto(message.encode(), (host, port))
         else:
