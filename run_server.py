@@ -38,9 +38,7 @@ class Server:
 
     #function to log in to an account
     def login_account(self, host, port, conn):
-        #message = 'Please enter your username (UUID)'
-        #conn.sendto(message.encode(), (host, port))
-        #check if this username exists- check if it is in the account_list, 
+        #check if this username exists- check if it is in the account_list,         
         data = conn.recv(1024).decode()
         #workaround with the login bug
         if (data.strip() in self.account_list) or (data.strip()[5:] in self.account_list):
@@ -55,8 +53,6 @@ class Server:
 
     def delete_account(self, username, host, port, conn):
         #TODO make protocol buffer so that every time a client send a message we send their UUID and their message
-        #data = conn.recv(1024).decode()
-        print('username!!!!!', username)
         if username in self.account_list:
             del self.account_list[username]
             print("Successfully deleted client account", self.account_list)

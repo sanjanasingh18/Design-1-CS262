@@ -58,8 +58,6 @@ class ClientSocket:
     while data != 'Account has been identified. Thank you!':
       
       #allow them to exit
-
-      #print("Unsuccessfully logged in")
       message = input("""We were unable to find an account associated with that username.
       Please type either 'create' to create a new account,
       'exit' to close the server connection/log out, 
@@ -101,12 +99,10 @@ class ClientSocket:
     # to happen by accident
 
     message = "delete" + str(self.username)
-    print("message + username", str(message), self.username)
     self.client.sendto(message.encode(), (host, port))
     
     #server sends back status of whether it worked
     data = self.client.recv(1024).decode()
-    print('data after sending message', data)
     if data == 'Account successfully deleted.':
       self.logged_in = False
       print("Successfully deleted account.")
@@ -167,6 +163,14 @@ class ClientSocket:
             print("delete client")
             self.delete_client_account(message, host, port)
             break
+
+          # if they ask to create or delete given that you are currently logged in, throw an error
+          elif message.lower().strip() == 'create':
+            print("Error: you must log out before creating a new account. Type 'log out' to proceed.")
+
+          # if they ask to create or delete given that you are currently logged in, throw an error
+          elif message.lower().strip() == 'login':
+            print("Error: you are currently logged in to an account. Type 'log out' to proceed and then log into another account.")
 
           else:
             self.client.sendto(message.encode(), (host, port))
