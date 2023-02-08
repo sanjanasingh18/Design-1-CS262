@@ -34,6 +34,7 @@ class ClientSocket:
     data = self.client.recv(1024).decode()
     # update object attributes
     self.username = data
+    print('updated username: ', self.username)
     self.logged_in = True
     print('Your unique username is '  + data)
 
@@ -47,6 +48,7 @@ class ClientSocket:
     message = input("""
     Please enter your username to log in: 
     """)
+    possible_username = message
     #send over the username to the client
     self.client.sendto(message.encode(), (host, port))
 
@@ -86,15 +88,25 @@ class ClientSocket:
     if data == 'Account has been identified. Thank you!':
       print("Successfully logged in.")
       self.logged_in = True
+      self.username = message
 
 
 
 
-  def delete_client_account(self, host, port):
-    message = 'delete'
+
+  def delete_client_account(self, message, host, port):
+
+    # send a message that is 'delete' followed by the username to be parsed by the other side
+    # we do not have a confirmation to delete as it takes effort to type 'delete' so it is difficult
+    # to happen by accident
+
+    message = "delete" + str(self.username)
+    print("message + username", str(message), self.username)
     self.client.sendto(message.encode(), (host, port))
+    
+    #server sends back status of whether it worked
     data = self.client.recv(1024).decode()
-
+    print('data after sending message', data)
     if data == 'Account successfully deleted.':
       self.logged_in = False
       print("Successfully deleted account.")
@@ -104,7 +116,7 @@ class ClientSocket:
   def client_program(self):
       # host = socket.
       host = 'dhcp-10-250-7-238.harvard.edu'
-      port = 8883
+      port = 8887
 
       # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       # client.connect((host, port))
@@ -120,6 +132,7 @@ class ClientSocket:
         Type 'login' to log into your account.
         Type 'create' to create a new account.
         Type 'exit' to disconnect from server/log out.
+        Type 'delete' to delete your account.
         """)
 
         #login function
@@ -131,7 +144,7 @@ class ClientSocket:
         elif message.lower().strip() == 'create':
           print("create_client")
           self.create_client_username(message, host, port)
-        
+      
         #exit function- may want to exit early
         elif message.lower().strip() == 'exit':
           print(f'Connection closed.')
@@ -148,16 +161,21 @@ class ClientSocket:
         
         #continue 
         while message.strip() != 'exit':
+
           #delete account function
-          if message.lower().strip() == 'delete my account':
-            self.delete_client_account(host, port)
+          if message.lower().strip() == 'delete':
+            print("delete client")
+            self.delete_client_account(message, host, port)
+            break
 
-          self.client.sendto(message.encode(), (host, port))
-          data = self.client.recv(1024).decode()
-
-          print('Message from server: ' + data)
+          else:
+            self.client.sendto(message.encode(), (host, port))
+            data = self.client.recv(1024).decode()
+            print('Message from server: ' + data)
+          
           message = input('Reply to server: ')
 
+        self.logged_in = False
         print(f'Connection closed.')
         self.client.close()
 

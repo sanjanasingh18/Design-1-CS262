@@ -53,20 +53,20 @@ class Server:
             message = 'Error'
             conn.sendto(message.encode(), (host, port))
 
-    def delete_account(self, host, port, conn):
+    def delete_account(self, username, host, port, conn):
         #TODO make protocol buffer so that every time a client send a message we send their UUID and their message
-        data = conn.recv(1024).decode()
-        if data == 'delete':
-            if self.curr_user in self.account_list:
-                del self.account_list[self.curr_user]
-                print("Successfully deleted client account")
-                message = 'Account successfully deleted.'
-                conn.sendto(message.encode(), (host, port))
-            else:
-                # want to prompt the client to either try again or create account
-                print("key not found.")
-                message = 'Error deleting account'
-                conn.sendto(message.encode(), (host, port))
+        #data = conn.recv(1024).decode()
+        print('username!!!!!', username)
+        if username in self.account_list:
+            del self.account_list[username]
+            print("Successfully deleted client account", self.account_list)
+            message = 'Account successfully deleted.'
+            conn.sendto(message.encode(), (host, port))
+        else:
+            # want to prompt the client to either try again or create account
+            print("key not found: see current account list", self.account_list)
+            message = 'Error deleting account'
+            conn.sendto(message.encode(), (host, port))
 
     def server_program(self):
         #changed to the 
@@ -75,7 +75,7 @@ class Server:
         #computers
         host = 'dhcp-10-250-7-238.harvard.edu'
         print(host)
-        port = 8883
+        port = 8887
         self.server.bind((host, port))
 
         #while SOMETHING, listen!
@@ -97,14 +97,16 @@ class Server:
 
                 print('Message from client: ' + data)
 
-                #check if data equals 'login'
-                if data.lower().strip() == 'login':
+                #check if data equals 'login'- take substring as we send login + username to server
+                if data.lower().strip()[:5] == 'login':
                     print('server login')
                     self.login_account(host, port, conn)
                 elif data.lower().strip() == 'create':
                     self.create_username(host, port, conn)
-                elif data.lower().strip() == 'delete':
-                    self.delete_account(host, port, conn)
+                #check if data equals 'delete'- take substring as we send  delete + username to server
+                elif data.lower().strip()[:6] == 'delete':
+                    print(data, data.lower().strip(), data.lower().strip()[6:])
+                    self.delete_account(data.lower()[6:], host, port, conn)
                 else:
                     message = input('Reply to client: ')
                     conn.sendto(message.encode(), (host, port))
