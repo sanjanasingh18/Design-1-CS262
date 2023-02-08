@@ -111,7 +111,8 @@ class ClientSocket:
 
   def client_program(self):
       # host = socket.
-      host = 'dhcp-10-250-7-238.harvard.edu'
+      # host = 'dhcp-10-250-7-238.harvard.edu'
+      host = ''
       port = 8887
 
       # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

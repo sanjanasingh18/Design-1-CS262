@@ -69,46 +69,61 @@ class Server:
         #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         #used socket.gethostname() to get the host name to connect between
         #computers
-        host = 'dhcp-10-250-7-238.harvard.edu'
+        # host = 'dhcp-10-250-7-238.harvard.edu'
+        host = ''
         print(host)
         port = 8887
         self.server.bind((host, port))
 
         #while SOMETHING, listen!
         while True:
+            lst_acc_cmd = 'list accounts'
             self.server.listen()
             conn, addr = self.server.accept()
 
             print(f'{addr} connected to server.')
 
-            #want to see when we have to disconnect- revise this while loop 
-            #and break statement
+            # want to see when we have to disconnect- revise this while loop 
+            # and break statement
             while True:
-                #receive from client
+                # receive from client
                 data = conn.recv(1024).decode()
                 
-                #check if connection closed
+                # check if connection closed
                 if not data:
                     break
 
                 print('Message from client: ' + data)
 
-                #check if data equals 'login'- take substring as we send login + username to server
+                # check if data equals 'login'- take substring as we send login + username to server
                 if data.lower().strip()[:5] == 'login':
                     print('server login')
                     self.login_account(host, port, conn)
                 elif data.lower().strip() == 'create':
                     self.create_username(host, port, conn)
-                #check if data equals 'delete'- take substring as we send  delete + username to server
+                # check if data equals 'delete'- take substring as we send  delete + username to server
                 elif data.lower().strip()[:6] == 'delete':
                     print(data, data.lower().strip(), data.lower().strip()[6:])
                     self.delete_account(data.lower()[6:], host, port, conn)
                 else:
-                    message = input('Reply to client: ')
+                    # allows the server to list all the accounts, once all accounts are listed, prompts 
+                    # server to list all accounts again or type a message to send to client
+                    message = input("Reply to client or type 'list accounts' to list all accounts: ")
+                    while message.lower().strip() == lst_acc_cmd:
+                        print('Account UUIDs: ' + str(list(self.account_list.keys())))
+                        message = input("Reply to client or type 'list accounts' to list all accounts: ")
                     conn.sendto(message.encode(), (host, port))
             
-            #need to continuously scan for 'exit' to exit the server. TODO- fix this
-            message = input("Type 'exit' to close the server or press enter to continue")
+            # need to continuously scan for 'exit' to exit the server. TODO- fix this
+            message = input("Type 'exit' to close the server, 'list accounts' to list all accounts, or press enter to continue: ")
+            # prompts the user for input until the server inputs exit to close or just presses
+            # enter to continue
+            while (message.lower().strip() != 'exit') and (message.lower().strip() != ''):
+                # prints all the UUIDs stored if the server asks to list all the accounts while a client
+                # is not connected.
+                if message.lower().strip() == lst_acc_cmd:
+                    print('Account UUIDs: ' + str(list(self.account_list.keys())))
+                message = input("Type 'exit' to close the server, 'list accounts' to list all accounts, or press enter to continue: ")
             if message.lower().strip() == 'exit':
                 print('You have successfully closed the server.')
                 conn.close()
