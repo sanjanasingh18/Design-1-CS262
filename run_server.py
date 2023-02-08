@@ -57,8 +57,8 @@ class Server:
         #TODO make protocol buffer so that every time a client send a message we send their UUID and their message
         data = conn.recv(1024).decode()
         if data == 'delete':
-            if curr_user in self.account_list:
-                del self.account_list[curr_user]
+            if self.curr_user in self.account_list:
+                del self.account_list[self.curr_user]
                 print("Successfully deleted client account")
                 message = 'Account successfully deleted.'
                 conn.sendto(message.encode(), (host, port))
@@ -121,14 +121,14 @@ class Server:
         #while server doesn't say to EXIT
 
     
-    def deliver_message():
+    def deliver_message(self):
         #is the account logged in?
         #if so, deliver immediately
         print('delivered')
         #if not, add to queue 
 
     def list_accounts(self):
-        print(account_list.keys())
+        print(self.account_list.keys())
 
 if __name__ == '__main__':
     a = Server()
