@@ -15,7 +15,7 @@ class Server:
         #want to create a list of accounts for this server and unsent messages
 
         #format of account_list is [UUID: queue of messages not yet sent]
-        self.account_list = dict() #['abc'] 
+        self.account_list = dict() #['abc']
         
         if sock is None:
             self.server = socket.socket(
@@ -23,11 +23,9 @@ class Server:
         else:
             self.server = sock
 
-    def is_username_valid(username_candidate):
-        # check if username has key words
-        # cannot start with the words delete, create, login 
-
+    def is_username_valid(self, recipient_username):
         # cannot be in account_list (must be a unique username)
+        return recipient_username in self.account_list
         
     #function we use to create an account/username for a new user
     def create_username(self, host, port, conn):
@@ -70,10 +68,13 @@ class Server:
             message = 'Error deleting account'
             conn.sendto(message.encode(), (host, port))
 
-    
-    def deliver_message(self):
+    def is_logged_in():
+        
+
+    def deliver_message(self, sender_username, recipient_username, message, host, port):
         #is the account logged in?
         #if so, deliver immediately
+        if recipient_username
         print('delivered')
         #if not, add to queue 
 
