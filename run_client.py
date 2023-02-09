@@ -26,7 +26,7 @@ class ClientSocket:
     # we store if the client is currently logged in, their username, password, and 
     # queue of messages that they want to receive
     # all of these objects are stored in a dictionary on the server of username : ClientSocket object
-    
+
     self.logged_in = False
     self.username = ''
     self.password = ''
@@ -51,8 +51,8 @@ class ClientSocket:
   def emptyMessages(self):
     self.messages = []
 
-  def addMessage(self, message):
-    self.messages.append(message)
+  def addMessage(self, message_tuple):
+    self.messages.append(message_tuple)
 
   #helper function to create an account
   def create_client_username(self, message, host, port):

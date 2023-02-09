@@ -37,9 +37,41 @@ class Server:
             return self.account_list.get(username).getStatus()
         
         # if the username is invalid, return error
-        return "Username is not found."
-        
-    #function we use to create an account/username for a new user
+        return "Recipient username is not valid."
+
+
+    # if the recipient isn't logged in, add the message to the queue
+    def add_message_to_queue(self, sender_username, recipient_username, message):
+        # queue format is tuples of (sender_username, message)
+        self.account_list.get(recipient_username).addMessage(self, (sender_username, message))
+
+
+    # returns True upon successful delivery. returns False if it fails.
+    def deliver_message(self, sender_username, recipient_username, message, host, port):
+        # is the recipient account logged in?
+        user_status = get_user_status(recipient_username)
+        if user_status:
+            # if so, deliver immediately
+            message_to_recipient = sender_username + "_" + message
+
+            # what if both accounts are logged in??? who is this sending it to 
+            # TODO - answer this question ^
+            conn.sendto(message_to_recipient.encode(), (host, port))
+            
+            print('Delivered message ' + message + " to " + recipient_username + " from " + sender_username)
+
+        # Checks if it is sent to a valid user
+        elif user_status == "Recipient username is not valid.":
+            return False
+
+        # if not logged in, add to recipient queue
+        else:
+            # add to queue for recipient
+            self.add_message_to_queue(self, sender_username, recipient_username, message)
+            return True
+
+
+    # function we use to create an account/username for a new user
     def create_username(self, host, port, conn):
         # server will generate UUID, print UUID, send info to client, and then add it to the dict
         username = uuid.uuid4()
@@ -81,12 +113,6 @@ class Server:
             message = 'Error deleting account'
             conn.sendto(message.encode(), (host, port))
 
-
-    def deliver_message(self, sender_username, recipient_username, message, host, port):
-        #is the account logged in?
-        #if so, deliver immediately
-        print('delivered')
-        #if not, add to queue 
 
     #function to list all active (non-deleted) accounts
     #add a return statement so it is easier to Unittest
