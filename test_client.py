@@ -4,12 +4,27 @@ import socket
 import math
 import time
 import uuid
+import uuid
+import unittest
 
 
-#[uuid: account info ]
+# https://docs.python.org/2/library/unittest.html from section 25.3.1 
 
-#account info is an object
-#recipients: queue of undelivered messages, logged in or not 
-#login TODO- if you login and you hvave undelivered messages, want to send those
+class TestStringMethods(unittest.TestCase):
 
-#this source code from https://docs.python.org/3/howto/sockets.html
+    def test_upper(self):
+        self.assertEqual('foo'.upper(), 'FOO')
+
+    def test_isupper(self):
+        self.assertTrue('FOO'.isupper())
+        self.assertFalse('Foo'.isupper())
+
+    def test_split(self):
+        s = 'hello world'
+        self.assertEqual(s.split(), ['hello', 'world'])
+        # check that s.split fails when the separator is not a string
+        with self.assertRaises(TypeError):
+            s.split(2)
+
+if __name__ == '__main__':
+    unittest.main()
