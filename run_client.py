@@ -5,11 +5,6 @@ import math
 import time
 import uuid
 
-clientsocket has a clientinfo object
-
-good fit for a dictionary
-
-dictionary would be on server
 
 #[uuid: account info ]
 
@@ -62,6 +57,19 @@ class ClientSocket:
     self.username = data
     self.logged_in = True
     print('Your unique username is '  + data)
+
+    # add a password input
+    pwd_client = input('Enter password: ')
+
+    # update the password in the client side
+    self.password = pwd_client
+
+    self.client.sendto((pwd_client).encode(), (host, port))
+
+    confirmation_from_server = self.client.recv(1024).decode()
+    print(confirmation_from_server)
+
+
 
   #helper function to login to a client account
   def login_client_account(self, message, host, port):
@@ -179,7 +187,7 @@ class ClientSocket:
       # can only enter loop if you are logged in
       if self.logged_in:
 
-        message = input("Enter recipient username or 'exit' to leave program or 'delete' to delete your acount: ")
+        message = input("To send a message, enter the recipient username or 'exit' to leave program or 'delete' to delete your account: ")
         
         #now, allow the client + server to interact until it says to exit
         #message = input('Reply to server: ')
@@ -210,7 +218,7 @@ class ClientSocket:
             if data == "User found. Please enter your message: ":
               message = input(data)
             # while loop to keep sending messages to this person until you enter 'stop'
-              while message[4: ]
+              #while message[4: ]
             # then want to send message to person 
 
             # receive confirmation that it was sent 
@@ -222,7 +230,7 @@ class ClientSocket:
 
             print('Message from server: ' + data)
           
-          message = input("Enter recipient username or 'exit' to leave program or 'delete' to delete your acount: ")
+          message = input("To send a message, enter the recipient username or 'exit' to leave program or 'delete' to delete your account: ")
 
         self.logged_in = False
         print(f'Connection closed.')

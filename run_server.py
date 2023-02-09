@@ -75,13 +75,19 @@ class Server:
     def create_username(self, host, port, conn):
         # server will generate UUID, print UUID, send info to client, and then add it to the dict
         username = uuid.uuid4()
-        print("Unique username generated for client is "+ str(username) + ". Waiting on message from client.")
+        print("Unique username generated for client is "+ str(username) + ".")
         message = str(username)
         conn.sendto(message.encode(), (host, port))
 
         # add (username: clientSocket object where clientSocket includes log-in status,
         # username, password, and queue of undelivered messages
+        # it will initialize a new account
         self.account_list[message] = ClientSocket()
+
+        # client will send back a password + send over confirmation
+        data = conn.recv(1024).decode()
+        message = "Your password is confirmed to be " + data
+        conn.sendto(message.encode(), (host, port))
 
     #function to log in to an account
     def login_account(self, host, port, conn):
