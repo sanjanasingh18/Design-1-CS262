@@ -14,6 +14,29 @@ import uuid
 
 #this source code from https://docs.python.org/3/howto/sockets.html
 
+class ClientInfo:
+
+  def __init__(self):
+    # In ClientSocket, objects are username: [ClientInfo]
+    self.login_status = False
+    self.messages = []
+
+  def getStatus(self):
+    return self.login_status
+
+  def setStatus(self, update_status):
+    self.login_status = update_status
+  
+  def getMessages(self):
+    return self.messages
+
+  def emptyMessages(self):
+    self.messages = []
+
+  def addMessage(self, message):
+    self.messages.append(message)
+
+
 class ClientSocket:
 
   def __init__(self, client=None):

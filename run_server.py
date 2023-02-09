@@ -120,7 +120,7 @@ class Server:
                 if data.lower().strip()[:5] == 'login':
                     print('server login')
                     self.login_account(host, port, conn)
-                elif data.lower().strip() == 'create':
+                elif data.lower().strip()[:6] == 'create':
                     self.create_username(host, port, conn)
 
                 # check if data equals 'delete'- take substring as we send  delete + username to server
