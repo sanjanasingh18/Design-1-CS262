@@ -74,7 +74,6 @@ class Server:
     def deliver_message(self, sender_username, recipient_username, message, host, port):
         #is the account logged in?
         #if so, deliver immediately
-        if recipient_username
         print('delivered')
         #if not, add to queue 
 
