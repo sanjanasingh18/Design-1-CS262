@@ -19,19 +19,32 @@ dictionary would be on server
 
 #this source code from https://docs.python.org/3/howto/sockets.html
 
-class ClientInfo:
 
-  def __init__(self):
-    # In ClientSocket, objects are username: [ClientInfo]
+class ClientSocket:
+
+  def __init__(self, client=None):
+    # we store if the client is currently logged in, their username, password, and 
+    # queue of messages that they want to receive
+    # all of these objects are stored in a dictionary on the server of username : ClientSocket object
+    
+    self.logged_in = False
+    self.username = ''
     self.password = ''
     self.messages = []
 
+    if client is None:
+      self.client = socket.socket(
+                        socket.AF_INET, socket.SOCK_STREAM)
+    else:
+      self.client = client
+
+  # basic get/set
   def getStatus(self):
-    return self.login_status
+    return self.logged_in
 
   def setStatus(self, update_status):
-    self.login_status = update_status
-  
+    self.logged_in = update_status
+
   def getMessages(self):
     return self.messages
 
@@ -41,28 +54,12 @@ class ClientInfo:
   def addMessage(self, message):
     self.messages.append(message)
 
-
-class ClientSocket:
-
-  def __init__(self, client=None):
-    # add an is_logged_in object for the account
-    self.logged_in = False
-
-    self.username = ''
-
-    if client is None:
-      self.client = socket.socket(
-                        socket.AF_INET, socket.SOCK_STREAM)
-    else:
-      self.client = client
-
   #helper function to create an account
   def create_client_username(self, message, host, port):
     self.client.sendto(message.encode(), (host, port))
     data = self.client.recv(1024).decode()
     # update object attributes
     self.username = data
-    print('updated username: ', self.username)
     self.logged_in = True
     print('Your unique username is '  + data)
 

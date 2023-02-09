@@ -4,6 +4,7 @@ import socket
 import math
 import time
 import uuid
+from run_client import ClientSocket
 
 #this source code from https://docs.python.org/3/howto/sockets.html
 
@@ -14,7 +15,7 @@ class Server:
         #want to set up a server socket as we did with the sample code
         #want to create a list of accounts for this server and unsent messages
 
-        #format of account_list is [UUID: login status (bool)]
+        #format of account_list is [UUID: ClientObject]
         self.account_list = dict()
         
         if sock is None:
@@ -23,13 +24,20 @@ class Server:
         else:
             self.server = sock
 
-    # function to get a user's login status from the account_list
-    def get_user_status():
-        
-
     def is_username_valid(self, recipient_username):
         # cannot be in account_list (must be a unique username)
         return recipient_username in self.account_list
+
+    
+    # function to get a user's login status from the account_list
+    def get_user_status(self, username):
+        # check if the username is valid
+        if self.is_username_valid(username):
+            # get the object then access the user status usign getStatus()
+            return self.account_list.get(username).getStatus()
+        
+        # if the username is invalid, return error
+        return "Username is not found."
         
     #function we use to create an account/username for a new user
     def create_username(self, host, port, conn):
@@ -39,10 +47,9 @@ class Server:
         message = str(username)
         conn.sendto(message.encode(), (host, port))
 
-        # add (username: empty list) to dictionary
-        # empty list will eventually hold the queue of messages
-        self.account_list[message] = []
-        curr_user = message
+        # add (username: clientSocket object where clientSocket includes log-in status,
+        # username, password, and queue of undelivered messages
+        self.account_list[message] = new ClientSocket()
 
     #function to log in to an account
     def login_account(self, host, port, conn):
@@ -60,7 +67,8 @@ class Server:
             conn.sendto(message.encode(), (host, port))
 
     def delete_account(self, username, host, port, conn):
-        #TODO make protocol buffer so that every time a client send a message we send their UUID and their message
+        # TODO make protocol buffer so that every time a client send a message we send their UUID and their message
+        # You can only delete your account once you are logged in so it handles undelivered messages
         if username in self.account_list:
             del self.account_list[username]
             print("Successfully deleted client account", self.account_list)
@@ -68,12 +76,11 @@ class Server:
             conn.sendto(message.encode(), (host, port))
         else:
             # want to prompt the client to either try again or create account
-            print("key not found: see current account list", self.account_list)
+            # NOTE this print statement is just internal... client will not see the account list
+            #print("Key not found: see current account list", self.account_list)
             message = 'Error deleting account'
             conn.sendto(message.encode(), (host, port))
 
-    def is_logged_in():
-        
 
     def deliver_message(self, sender_username, recipient_username, message, host, port):
         #is the account logged in?
@@ -157,9 +164,6 @@ class Server:
                 conn.close()
                 break
             
-        #TODO- do not want to automatically disconnect once
-        #you have a client
-        #while server doesn't say to EXIT
 
 if __name__ == '__main__':
     a = Server()
