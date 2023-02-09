@@ -81,7 +81,7 @@ class Server:
 
         # add (username: clientSocket object where clientSocket includes log-in status,
         # username, password, and queue of undelivered messages
-        self.account_list[message] = new ClientSocket()
+        self.account_list[message] = ClientSocket()
 
     #function to log in to an account
     def login_account(self, host, port, conn):
