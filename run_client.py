@@ -5,6 +5,11 @@ import math
 import time
 import uuid
 
+clientsocket has a clientinfo object
+
+good fit for a dictionary
+
+dictionary would be on server
 
 #[uuid: account info ]
 
@@ -205,9 +210,10 @@ class ClientSocket:
             data = self.client.recv(1024).decode()
 
             # if username is found, server will return 'User found. What is your message: '
-
+            if data == "User found. Please enter your message: ":
+              message = input(data)
             # while loop to keep sending messages to this person until you enter 'stop'
-
+              while message[4: ]
             # then want to send message to person 
 
             # receive confirmation that it was sent 
