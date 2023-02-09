@@ -101,11 +101,13 @@ class Server:
                     self.login_account(host, port, conn)
                 elif data.lower().strip() == 'create':
                     self.create_username(host, port, conn)
+
                 # check if data equals 'delete'- take substring as we send  delete + username to server
                 elif data.lower().strip()[:6] == 'delete':
                     print(data, data.lower().strip(), data.lower().strip()[6:])
                     self.delete_account(data.lower()[6:], host, port, conn)
                 else:
+
                     # allows the server to list all the accounts, once all accounts are listed, prompts 
                     # server to list all accounts again or type a message to send to client
                     message = input("Reply to client or type 'list accounts' to list all accounts: ")
@@ -116,11 +118,13 @@ class Server:
             
             # need to continuously scan for 'exit' to exit the server. TODO- fix this
             message = input("Type 'exit' to close the server, 'list accounts' to list all accounts, or press enter to continue: ")
+            
             # prompts the user for input until the server inputs exit to close or just presses
             # enter to continue
             while (message.lower().strip() != 'exit') and (message.lower().strip() != ''):
                 # prints all the UUIDs stored if the server asks to list all the accounts while a client
                 # is not connected.
+               
                 if message.lower().strip() == lst_acc_cmd:
                     print('Account UUIDs: ' + str(list(self.account_list.keys())))
                 message = input("Type 'exit' to close the server, 'list accounts' to list all accounts, or press enter to continue: ")
