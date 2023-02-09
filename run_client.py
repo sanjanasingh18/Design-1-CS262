@@ -23,7 +23,7 @@ class ClientInfo:
 
   def __init__(self):
     # In ClientSocket, objects are username: [ClientInfo]
-    self.login_status = False
+    self.password = ''
     self.messages = []
 
   def getStatus(self):

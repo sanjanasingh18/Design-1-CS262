@@ -14,14 +14,18 @@ class Server:
         #want to set up a server socket as we did with the sample code
         #want to create a list of accounts for this server and unsent messages
 
-        #format of account_list is [UUID: queue of messages not yet sent]
-        self.account_list = dict() #['abc']
+        #format of account_list is [UUID: login status (bool)]
+        self.account_list = dict()
         
         if sock is None:
             self.server = socket.socket(
                             socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.server = sock
+
+    # function to get a user's login status from the account_list
+    def get_user_status():
+        
 
     def is_username_valid(self, recipient_username):
         # cannot be in account_list (must be a unique username)
