@@ -153,8 +153,11 @@ class ClientSocket:
 
       #you can only access this loop if you have logged in- if you aren't logged in then you exited
       if self.logged_in:
+
+        message = input("Enter recipient username or 'exit' to leave program or 'delete' to delete your acount: ")
+        
         #now, allow the client + server to interact until it says to exit
-        message = input('Reply to server: ')
+        #message = input('Reply to server: ')
         
         #continue 
         while message.strip() != 'exit':
@@ -174,11 +177,26 @@ class ClientSocket:
             print("Error: you are currently logged in to an account. Type 'log out' to proceed and then log into another account.")
 
           else:
-            self.client.sendto(message.encode(), (host, port))
+            # send the message to recipient
+            self.client.sendto(('sendmsg' + message).encode(), (host, port))
             data = self.client.recv(1024).decode()
+
+            # if username is found, server will return 'User found. What is your message: '
+
+            # while loop to keep sending messages to this person until you enter 'stop'
+
+            # then want to send message to person 
+
+            # receive confirmation that it was sent 
+
+
+            # if username is not found, server will say 'User not found'.
+
+            # re prompt message
+
             print('Message from server: ' + data)
           
-          message = input('Reply to server: ')
+          message = input("Enter recipient username or 'exit' to leave program or 'delete' to delete your acount: ")
 
         self.logged_in = False
         print(f'Connection closed.')

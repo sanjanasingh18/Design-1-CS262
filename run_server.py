@@ -23,6 +23,12 @@ class Server:
         else:
             self.server = sock
 
+    def is_username_valid(username_candidate):
+        # check if username has key words
+        # cannot start with the words delete, create, login 
+
+        # cannot be in account_list (must be a unique username)
+        
     #function we use to create an account/username for a new user
     def create_username(self, host, port, conn):
         # server will generate UUID, print UUID, send info to client, and then add it to the dict
@@ -63,6 +69,20 @@ class Server:
             print("key not found: see current account list", self.account_list)
             message = 'Error deleting account'
             conn.sendto(message.encode(), (host, port))
+
+    
+    def deliver_message(self):
+        #is the account logged in?
+        #if so, deliver immediately
+        print('delivered')
+        #if not, add to queue 
+
+    #function to list all active (non-deleted) accounts
+    #add a return statement so it is easier to Unittest
+    def list_accounts(self):
+        print(self.account_list.keys())
+        return self.account_list.keys()
+
 
     def server_program(self):
         #changed to the 
@@ -132,16 +152,6 @@ class Server:
         #TODO- do not want to automatically disconnect once
         #you have a client
         #while server doesn't say to EXIT
-
-    
-    def deliver_message(self):
-        #is the account logged in?
-        #if so, deliver immediately
-        print('delivered')
-        #if not, add to queue 
-
-    def list_accounts(self):
-        print(self.account_list.keys())
 
 if __name__ == '__main__':
     a = Server()

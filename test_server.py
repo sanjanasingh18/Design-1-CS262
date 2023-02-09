@@ -33,6 +33,14 @@ class InitServerCreateAccountListCase(SimpleServerTestCase):
         self.assertEqual(self.server_instance.account_list, dict(),
                          'incorrect default size')
 
+class ListAccountTestCase(SimpleServerTestCase):
+    def runTest(self):
+        #make the test where you can see that the length 
+        #once you let users choose their username, this will be easier to test
+        # TODO- update once we have username input
+        self.assertEqual([''], self.server_instance.list_accounts(),
+                         'incorrect accounts available')
+
 """class WidgetResizeTestCase(SimpleServerTestCase):
     def runTest(self):
         self.widget.resize(100,150)
