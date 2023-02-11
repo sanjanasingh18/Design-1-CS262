@@ -68,7 +68,7 @@ class Server:
         # if not logged in, add to recipient queue
         else:
             # add to queue for recipient
-            self.add_message_to_queue(self, sender_username, recipient_username, message)
+            self.add_message_to_queue(sender_username, recipient_username, message)
             return True
 
 
