@@ -48,7 +48,7 @@ class Server:
 
 
     # returns True upon successful delivery. returns False if it fails.
-    def deliver_message(self, sender_username, recipient_username, message, host, port):
+    def deliver_message(self, sender_username, recipient_username, message, host, port, conn):
         # is the recipient account logged in?
         user_status = self.get_user_status(recipient_username)
         if user_status:
@@ -261,7 +261,9 @@ class Server:
                
                 if message.lower().strip() == lst_acc_cmd:
                     print('Account UUIDs: ' + str(list(self.account_list.keys())))
+
                 message = input("Type 'exit' to close the server, 'list accounts' to list all accounts, or press enter to continue: ")
+                
             if message.lower().strip() == 'exit':
                 print('You have successfully closed the server.')
                 conn.close()
