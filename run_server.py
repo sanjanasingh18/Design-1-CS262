@@ -13,10 +13,10 @@ class Server:
     curr_user = ''
 
     def __init__(self, sock=None):
-        #want to set up a server socket as we did with the sample code
-        #want to create a list of accounts for this server and unsent messages
+        # want to set up a server socket as we did with the sample code
+        # want to create a list of accounts for this server and unsent messages
 
-        #format of account_list is [UUID: ClientObject]
+        # format of account_list is [UUID: ClientObject]
         self.account_list = dict()
         
         if sock is None:
@@ -24,6 +24,7 @@ class Server:
                             socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.server = sock
+
 
     def is_username_valid(self, recipient_username):
         # cannot be in account_list (must be a unique username)
@@ -93,7 +94,8 @@ class Server:
         message = "Your password is confirmed to be " + data
         conn.sendto(message.encode(), (host, port))
 
-    #function to log in to an account
+
+    # function to log in to an account
     def login_account(self, host, port, conn):
         username = conn.recv(1024).decode()
 
@@ -139,40 +141,6 @@ class Server:
             message = 'Error'
             conn.sendto(message.encode(), (host, port))
 
-        """    
-        # check if this username exists- check if it is in the account_list,         
-        data = conn.recv(1024).decode()
-        # workaround with the login bug
-
-        
-        if (data.strip() in self.account_list) or (data.strip()[5:] in self.account_list):
-            print('has key!', self.account_list)
-            message = 'Account has been identified. Thank you!'
-            conn.sendto(message.encode(), (host, port))
-            
-            print('sent msg to client')
-            # wait to confirmation that password worked
-            password_valid = conn.recv(1024).decode()
-
-            # need to check the server's record of the client password here
-            clie
-            print(password_valid)
-            if password_valid == "True":
-                message = 'You have logged in. Thank you!'
-                print(message)
-                conn.sendto(message.encode(), (host, port))
-            
-            else: 
-                # want to prompt the client to either try again or create account
-                print("Account not found.")
-                message = 'Error'
-                conn.sendto(message.encode(), (host, port))
-        else:
-            # want to prompt the client to either try again or create account
-            print("Account not found.")
-            message = 'Error'
-            conn.sendto(message.encode(), (host, port))
-        """
 
     def delete_account(self, username, host, port, conn):
         # TODO make protocol buffer so that every time a client send a message we send their UUID and their message
@@ -190,25 +158,24 @@ class Server:
             conn.sendto(message.encode(), (host, port))
 
 
-    #function to list all active (non-deleted) accounts
-    #add a return statement so it is easier to Unittest
+    # function to list all active (non-deleted) accounts
+    # add a return statement so it is easier to Unittest
     def list_accounts(self):
         print(self.account_list.keys())
         return self.account_list.keys()
 
 
     def server_program(self):
-        #changed to the 
-        #server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #used socket.gethostname() to get the host name to connect between
-        #computers
+        # changed to the 
+        # server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # used socket.gethostname() to get the host name to connect between computers
         # host = 'dhcp-10-250-7-238.harvard.edu'
         host = ''
         print(host)
         port = set_port
         self.server.bind((host, port))
 
-        #while SOMETHING, listen!
+        # while SOMETHING, listen!
         while True:
             lst_acc_cmd = 'list accounts'
             self.server.listen()
@@ -265,7 +232,7 @@ class Server:
                 print('You have successfully closed the server.')
                 conn.close()
                 break
-            
+
 
 if __name__ == '__main__':
     a = Server()

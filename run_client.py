@@ -54,7 +54,8 @@ class ClientSocket:
   def addMessage(self, message_tuple):
     self.messages.append(message_tuple)
 
-  #helper function to create an account
+
+  # helper function to create an account
   def create_client_username(self, message, host, port):
     self.client.sendto(message.encode(), (host, port))
     data = self.client.recv(1024).decode()
@@ -74,7 +75,6 @@ class ClientSocket:
 
     confirmation_from_server = self.client.recv(1024).decode()
     print(confirmation_from_server)
-
 
 
   # helper function to login to a client account
@@ -101,19 +101,6 @@ class ClientSocket:
     self.client.sendto(pwd_input.encode(), (host, port))
 
     data = self.client.recv(1024).decode()
-
-    # check if pwd_input = password
-    #while pwd_input != self.password:
-    #  pwd_input = input("""
-    #  Please enter your password to log in: 
-    #  """)
-    #print(pwd_input, self.password)
-    #if pwd_input == self.password:
-      # once you get to pwd_input = password, you have logged in. Send confirmation to server.
-      #print("pwd found!!!")
-      #message = "True"
-      #self.client.sendto(message.encode(), (host, port))
-
 
     while data != 'You have logged in. Thank you!':
       
@@ -169,9 +156,6 @@ class ClientSocket:
       self.username = message
 
 
-
-
-
   def delete_client_account(self, message, host, port):
 
     # send a message that is 'delete' followed by the username to be parsed by the other side
@@ -189,6 +173,7 @@ class ClientSocket:
     else:
       print("Unsuccessfully deleted account.")
 
+
   def client_program(self):
       # host = socket.
       # host = 'dhcp-10-250-7-238.harvard.edu'
@@ -199,11 +184,11 @@ class ClientSocket:
       # client.connect((host, port))
       self.client.connect((host, port))
 
-      #handle initial information flow- either will login or create a new account
+      # handle initial information flow- either will login or create a new account
       
-      #You need to either log in or create first
+      # You need to either log in or create first
       while not self.logged_in:
-        #handle initial information flow- either will login or create a new account
+        # handle initial information flow- either will login or create a new account
         message = input("""
         Welcome!
         Type 'login' to log into your account.
@@ -212,37 +197,37 @@ class ClientSocket:
         Type 'delete' to delete your account.
         """)
 
-        #login function
+        # login function
         if message.lower().strip()[:5] == 'login':
           self.login_client_account(message, host, port)
           break
 
-        #create function
+        # create function
         elif message.lower().strip() == 'create':
           print("create_client")
           self.create_client_username(message, host, port)
       
-        #exit function- may want to exit early
+        # exit function- may want to exit early
         elif message.lower().strip() == 'exit':
           print(f'Connection closed.')
           self.client.close()
           self.logged_in = False
           break
         
-        #if it is none of these key words, it will re query until you enter 'login' or 'create'
+        # if it is none of these key words, it will re query until you enter 'login' or 'create'
 
       # can only enter loop if you are logged in
       if self.logged_in:
 
         message = input("To send a message, enter the recipient username or 'exit' to leave program or 'delete' to delete your account: ")
         
-        #now, allow the client + server to interact until it says to exit
-        #message = input('Reply to server: ')
+        # now, allow the client + server to interact until it says to exit
+        # message = input('Reply to server: ')
         
-        #continue 
+        # continue 
         while message.strip() != 'exit':
 
-          #delete account function
+          # delete account function
           if message.lower().strip() == 'delete':
             print("delete client")
             self.delete_client_account(message, host, port)
@@ -285,6 +270,7 @@ class ClientSocket:
         self.logged_in = False
         print(f'Connection closed.')
         self.client.close()
+
 
 if __name__ == '__main__':
   socket = ClientSocket()
