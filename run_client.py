@@ -28,8 +28,7 @@ class ClientSocket:
     self.messages = []
 
     if client is None:
-      self.client = socket.socket(
-                        socket.AF_INET, socket.SOCK_STREAM)
+      self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     else:
       self.client = client
 
@@ -71,32 +70,50 @@ class ClientSocket:
 
 
 
-  #helper function to login to a client account
+  # helper function to login to a client account
   def login_client_account(self, message, host, port):
 
-    #ensure that the server knows that it is the login function
+    # ensure that the server knows that it is the login function
     self.client.sendto(message.encode(), (host, port))
 
     print("login client account")
     message = input("""
     Please enter your username to log in: 
     """)
-    possible_username = message
-    #send over the username to the client
+    # send over the username to the client
     self.client.sendto(message.encode(), (host, port))
 
-    #will receive back confrmation that you logged in successfully
+    # will receive back confirmation that you logged in successfully
+    # changed to be confirmation that the username was found
     data = self.client.recv(1024).decode()
+
+    # OUTPUT OF DATA IS DIFF NOW
+
+    pwd_input = input("""
+    Please enter your password to log in: 
+    """)
+
+    # check if pwd_input = password
+    while pwd_input != self.password:
+      pwd_input = input("""
+      Please enter your password to log in: 
+      """)
+
+    # once you get to pwd_input = password, you have logged in. Send confirmation to server.
+    message = "True"
+    self.client.sendto(message.encode(), (host, port))
+
+    # TODO - need to add in the password function here too
 
     while data != 'Account has been identified. Thank you!':
       
-      #allow them to exit
+      # allow them to exit
       message = input("""We were unable to find an account associated with that username.
       Please type either 'create' to create a new account,
       'exit' to close the server connection/log out, 
       or re-enter your username.
       """)
-      #exit- close the connection
+      # exit- close the connection
       if message.lower().strip() == 'exit':
         print(f'Connection closed.')
         self.logged_in = False
@@ -106,13 +123,13 @@ class ClientSocket:
         self.create_client_username(message, host, port)
         break
       else: 
-        #requery the client to see if this was a successful username
-        #send over the username to the client
-        #prompt the server to look again for login
+        # requery the client to see if this was a successful username
+        # send over the username to the client
+        # prompt the server to look again for login
         inform_status = 'login' + message
         self.client.sendto(inform_status.encode(), (host, port))
 
-        #will receive back confrmation that you logged in successfully
+        # will receive back confrmation that you logged in successfully
         data = self.client.recv(1024).decode()
     
     # can exit while loop on success (logged in) or on a break 
@@ -217,8 +234,11 @@ class ClientSocket:
             # if username is found, server will return 'User found. What is your message: '
             if data == "User found. Please enter your message: ":
               message = input(data)
+
+            
             # while loop to keep sending messages to this person until you enter 'stop'
-              #while message[4: ]
+              #while message[4: ] != "stop":
+
             # then want to send message to person 
 
             # receive confirmation that it was sent 

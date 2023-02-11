@@ -98,9 +98,16 @@ class Server:
             print('has key!', self.account_list)
             message = 'Account has been identified. Thank you!'
             conn.sendto(message.encode(), (host, port))
+
+            # wait to confirmation that password worked
+            password_valid = conn.recv(1024).decode()
+            if password_valid == "True":
+                message = 'You have logged in. Thank you!'
+                conn.sendto(message.encode(), (host, port))
+
         else:
             # want to prompt the client to either try again or create account
-            print("key not found.")
+            print("Username not found.")
             message = 'Error'
             conn.sendto(message.encode(), (host, port))
 
