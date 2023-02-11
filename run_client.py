@@ -5,7 +5,7 @@ import math
 import time
 import uuid
 
-
+set_port = 8887
 #[uuid: account info ]
 
 #account info is an object
@@ -38,6 +38,9 @@ class ClientSocket:
 
   def setStatus(self, update_status):
     self.logged_in = update_status
+
+  def getPassword(self):
+    return self.password
 
   def getMessages(self):
     return self.messages
@@ -80,38 +83,41 @@ class ClientSocket:
     message = input("""
     Please enter your username to log in: 
     """)
-    # send over the username to the client
+    # send over the username to the server
     self.client.sendto(message.encode(), (host, port))
 
-    # will receive back confirmation that you logged in successfully
-    # changed to be confirmation that the username was found
+    # will receive back confirmation that username was sent successfully
     data = self.client.recv(1024).decode()
-
-    # OUTPUT OF DATA IS DIFF NOW
 
     pwd_input = input("""
     Please enter your password to log in: 
     """)
 
+    # in the loop, send the password to the server
+    self.client.sendto(pwd_input.encode(), (host, port))
+
+    data = self.client.recv(1024).decode()
+
     # check if pwd_input = password
-    while pwd_input != self.password:
-      pwd_input = input("""
-      Please enter your password to log in: 
-      """)
+    #while pwd_input != self.password:
+    #  pwd_input = input("""
+    #  Please enter your password to log in: 
+    #  """)
+    #print(pwd_input, self.password)
+    #if pwd_input == self.password:
+      # once you get to pwd_input = password, you have logged in. Send confirmation to server.
+      #print("pwd found!!!")
+      #message = "True"
+      #self.client.sendto(message.encode(), (host, port))
 
-    # once you get to pwd_input = password, you have logged in. Send confirmation to server.
-    message = "True"
-    self.client.sendto(message.encode(), (host, port))
 
-    # TODO - need to add in the password function here too
-
-    while data != 'Account has been identified. Thank you!':
+    while data != 'You have logged in. Thank you!':
       
       # allow them to exit
-      message = input("""We were unable to find an account associated with that username.
+      message = input("""We were unable to find an account associated with that username and password combination.
       Please type either 'create' to create a new account,
       'exit' to close the server connection/log out, 
-      or re-enter your username.
+      or type 'login' to attempt to log in again.
       """)
       # exit- close the connection
       if message.lower().strip() == 'exit':
@@ -126,14 +132,34 @@ class ClientSocket:
         # requery the client to see if this was a successful username
         # send over the username to the client
         # prompt the server to look again for login
+        # the user will send over their username so we want to prompt the server
+        # to anticipate the login input folowed y 
         inform_status = 'login' + message
         self.client.sendto(inform_status.encode(), (host, port))
 
+        # this was prior.
         # will receive back confrmation that you logged in successfully
+        # data = self.client.recv(1024).decode()
+        message = input("""
+        Please enter your username to log in: 
+        """)
+        # send over the username to the server
+        self.client.sendto(message.encode(), (host, port))
+
+        # will receive back confirmation that username was sent successfully
+        data = self.client.recv(1024).decode()
+
+        pwd_input = input("""
+        Please enter your password to log in: 
+        """)
+
+        # in the loop, send the password to the server
+        self.client.sendto(pwd_input.encode(), (host, port))
+
         data = self.client.recv(1024).decode()
     
     # can exit while loop on success (logged in) or on a break 
-    if data == 'Account has been identified. Thank you!':
+    if data == 'You have logged in. Thank you!':
       print("Successfully logged in.")
       self.logged_in = True
       self.username = message
@@ -163,7 +189,7 @@ class ClientSocket:
       # host = socket.
       # host = 'dhcp-10-250-7-238.harvard.edu'
       host = ''
-      port = 8887
+      port = set_port
 
       # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       # client.connect((host, port))

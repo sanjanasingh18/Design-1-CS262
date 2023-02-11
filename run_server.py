@@ -6,6 +6,7 @@ import time
 import uuid
 from run_client import ClientSocket
 
+set_port = 8887
 #this source code from https://docs.python.org/3/howto/sockets.html
 
 class Server:
@@ -49,7 +50,7 @@ class Server:
     # returns True upon successful delivery. returns False if it fails.
     def deliver_message(self, sender_username, recipient_username, message, host, port):
         # is the recipient account logged in?
-        user_status = get_user_status(recipient_username)
+        user_status = self.get_user_status(recipient_username)
         if user_status:
             # if so, deliver immediately
             message_to_recipient = sender_username + "_" + message
@@ -91,25 +92,88 @@ class Server:
 
     #function to log in to an account
     def login_account(self, host, port, conn):
-        #check if this username exists- check if it is in the account_list,         
-        data = conn.recv(1024).decode()
-        #workaround with the login bug
-        if (data.strip() in self.account_list) or (data.strip()[5:] in self.account_list):
-            print('has key!', self.account_list)
-            message = 'Account has been identified. Thank you!'
-            conn.sendto(message.encode(), (host, port))
+        username = conn.recv(1024).decode()
 
-            # wait to confirmation that password worked
-            password_valid = conn.recv(1024).decode()
-            if password_valid == "True":
+        confirm_received = "Confirming that the username has been received."
+        conn.sendto(confirm_received.encode(), (host, port))
+
+        password = conn.recv(1024).decode()
+        # ask for login and password and then verify if it works
+        if (username.strip() in self.account_list):
+            # get the password corresponding to this
+            print("Username found")
+
+            # TODO issue- get password keeps coming out blank. help!!!
+            
+            print(self.account_list.get(username.strip()).getPassword(), "pwd")
+            if password == self.account_list.get(username.strip()).getPassword():
                 message = 'You have logged in. Thank you!'
+                print(message)
+                conn.sendto(message.encode(), (host, port))
+            else:
+                print("PWD NOT FOUND- this is a temp print statment for debugging")
+                print("Account not found.")
+                message = 'Error'
+                conn.sendto(message.encode(), (host, port))
+
+        elif (username.strip()[5:] in self.account_list):
+            # get the password corresponding to this
+            print("Username 5 found")
+
+            # TODO issue- get password keeps coming out blank. help!!!
+
+            print(self.account_list.get(username.strip()).getPassword(), "pwd")
+            if password == self.account_list.get(username.strip()[5:]).getPassword():
+                message = 'You have logged in. Thank you!'
+                print(message)
+                conn.sendto(message.encode(), (host, port))
+            else:
+                print("PWD NOT FOUND- this is a temp print statment for debugging")
+                print("Account not found.")
+                message = 'Error'
                 conn.sendto(message.encode(), (host, port))
 
         else:
             # want to prompt the client to either try again or create account
-            print("Username not found.")
+            print("username not found- this is a temp print statment for debugging")
+            print("Account not found.")
             message = 'Error'
             conn.sendto(message.encode(), (host, port))
+
+        """    
+        # check if this username exists- check if it is in the account_list,         
+        data = conn.recv(1024).decode()
+        # workaround with the login bug
+
+        
+        if (data.strip() in self.account_list) or (data.strip()[5:] in self.account_list):
+            print('has key!', self.account_list)
+            message = 'Account has been identified. Thank you!'
+            conn.sendto(message.encode(), (host, port))
+            
+            print('sent msg to client')
+            # wait to confirmation that password worked
+            password_valid = conn.recv(1024).decode()
+
+            # need to check the server's record of the client password here
+            clie
+            print(password_valid)
+            if password_valid == "True":
+                message = 'You have logged in. Thank you!'
+                print(message)
+                conn.sendto(message.encode(), (host, port))
+            
+            else: 
+                # want to prompt the client to either try again or create account
+                print("Account not found.")
+                message = 'Error'
+                conn.sendto(message.encode(), (host, port))
+        else:
+            # want to prompt the client to either try again or create account
+            print("Account not found.")
+            message = 'Error'
+            conn.sendto(message.encode(), (host, port))
+        """
 
     def delete_account(self, username, host, port, conn):
         # TODO make protocol buffer so that every time a client send a message we send their UUID and their message
@@ -142,7 +206,7 @@ class Server:
         # host = 'dhcp-10-250-7-238.harvard.edu'
         host = ''
         print(host)
-        port = 8887
+        port = set_port
         self.server.bind((host, port))
 
         #while SOMETHING, listen!
