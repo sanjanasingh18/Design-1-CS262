@@ -6,7 +6,7 @@ import time
 import uuid
 from run_client import ClientSocket
 
-set_port = 8887
+set_port = 8888
 #this source code from https://docs.python.org/3/howto/sockets.html
 
 class Server:
@@ -84,9 +84,12 @@ class Server:
         # username, password, and queue of undelivered messages
         # it will initialize a new account
         self.account_list[message] = ClientSocket()
+        username = message
 
         # client will send back a password + send over confirmation
         data = conn.recv(1024).decode()
+        # update the password in the object that is being stored in the dictionary
+        self.account_list.get(username.strip()).setPassword(data)
         message = "Your password is confirmed to be " + data
         conn.sendto(message.encode(), (host, port))
 
@@ -103,15 +106,11 @@ class Server:
             # get the password corresponding to this
             print("Username found")
 
-            # TODO issue- get password keeps coming out blank. help!!!
-            
-            print(self.account_list.get(username.strip()).getPassword(), "pwd")
             if password == self.account_list.get(username.strip()).getPassword():
                 message = 'You have logged in. Thank you!'
                 print(message)
                 conn.sendto(message.encode(), (host, port))
             else:
-                print("PWD NOT FOUND- this is a temp print statment for debugging")
                 print("Account not found.")
                 message = 'Error'
                 conn.sendto(message.encode(), (host, port))

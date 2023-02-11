@@ -5,7 +5,7 @@ import math
 import time
 import uuid
 
-set_port = 8887
+set_port = 8888
 #[uuid: account info ]
 
 #account info is an object
@@ -45,6 +45,9 @@ class ClientSocket:
   def getMessages(self):
     return self.messages
 
+  def setPassword(self, password):
+    self.password = password
+
   def emptyMessages(self):
     self.messages = []
 
@@ -65,6 +68,7 @@ class ClientSocket:
 
     # update the password in the client side
     self.password = pwd_client
+    print(self.password)
 
     self.client.sendto((pwd_client).encode(), (host, port))
 
