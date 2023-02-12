@@ -6,7 +6,7 @@ import time
 import uuid
 from run_client import ClientSocket
 
-set_port = 8888
+set_port = 8889
 #this source code from https://docs.python.org/3/howto/sockets.html
 
 class Server:
@@ -35,7 +35,7 @@ class Server:
     def get_user_status(self, username):
         # check if the username is valid
         if self.is_username_valid(username):
-            # get the object then access the user status usign getStatus()
+            # get the object then access the user status using getStatus()
             return self.account_list.get(username).getStatus()
         
         # if the username is invalid, return error
@@ -44,33 +44,60 @@ class Server:
 
     # if the recipient isn't logged in, add the message to the queue
     def add_message_to_queue(self, sender_username, recipient_username, message):
-        # queue format is tuples of (sender_username, message)
-        self.account_list.get(recipient_username).addMessage(self, (sender_username, message))
+        # queue format is strings of sender_username + "" + message
+        message_string = sender_username + "" + message
+        self.account_list.get(recipient_username).addMessage(message_string)
 
 
     # returns True upon successful delivery. returns False if it fails.
-    def deliver_message(self, sender_username, recipient_username, message, host, port, conn):
+    def deliver_message(self, sender_username, recipient_username, host, port, conn):
         # is the recipient account logged in?
         user_status = self.get_user_status(recipient_username)
+        print('user status of the recipient', user_status)
+
+        # Checks if it is sent to a valid user
+        if user_status == "Recipient username is not valid.":
+            recipient_not_found = "User not found."
+            print(recipient_not_found)
+            conn.sendto(recipient_not_found.encode(), (host, port))
+            return False
+
+        # query the client for what the message is
+        confirmed_found_recipient = "User found. Please enter your message: "
+        print(confirmed_found_recipient)
+        conn.sendto(confirmed_found_recipient.encode(), (host, port))
+
+        # server will receive what the message the client wants to send is 
+        message = conn.recv(1024).decode()
+        
+        # regardless of client status, add the message to the recipient queue
+        self.add_message_to_queue(sender_username, recipient_username, message)
+
+        # print + deliver confirmation
+        confirmation_message_sent = 'Delivered message ' + message + " to " + recipient_username + " from " + sender_username
+        print(confirmation_message_sent)
+        conn.sendto(confirmation_message_sent.encode(), (host, port))
+        return True
+
+        # update from the logic below
+        """
         if user_status:
             # if so, deliver immediately
+            # cannot encode a message as a tuple. Must instead parse string
             message_to_recipient = sender_username + "_" + message
 
             # what if both accounts are logged in??? who is this sending it to 
             # TODO - answer this question ^
-            conn.sendto(message_to_recipient.encode(), (host, port))
-            
+            # conn.sendto(message_to_recipient.encode(), (host, port))
             print('Delivered message ' + message + " to " + recipient_username + " from " + sender_username)
-
-        # Checks if it is sent to a valid user
-        elif user_status == "Recipient username is not valid.":
-            return False
 
         # if not logged in, add to recipient queue
         else:
             # add to queue for recipient
             self.add_message_to_queue(sender_username, recipient_username, message)
-            return True
+            # print on server side
+            print('Delivered message ' + message + " to " + recipient_username + " from " + sender_username)
+        """
 
 
     # function we use to create an account/username for a new user
@@ -146,6 +173,8 @@ class Server:
         # TODO make protocol buffer so that every time a client send a message we send their UUID and their message
         # You can only delete your account once you are logged in so it handles undelivered messages
         if username in self.account_list:
+            # check if there are any messages in the queue to be delivered
+            # if so, deliver them
             del self.account_list[username]
             print("Successfully deleted client account", self.account_list)
             message = 'Account successfully deleted.'
@@ -199,13 +228,21 @@ class Server:
                 if data.lower().strip()[:5] == 'login':
                     print('server login')
                     self.login_account(host, port, conn)
+
                 elif data.lower().strip()[:6] == 'create':
                     self.create_username(host, port, conn)
 
                 # check if data equals 'delete'- take substring as we send  delete + username to server
                 elif data.lower().strip()[:6] == 'delete':
-                    print(data, data.lower().strip(), data.lower().strip()[6:])
+                    # data parsing works correctly
+                    # print(data, data.lower().strip(), data.lower().strip()[6:])
                     self.delete_account(data.lower()[6:], host, port, conn)
+
+                # check if client request to send a message
+                elif data.lower().strip()[:7] == 'sendmsg':
+                    # data parsing works correctly
+                    # print(data, data.lower().strip()[7:43], data.lower()[44:])
+                    self.deliver_message(data.lower().strip()[7:43], data.lower()[44:], host, port, conn)
                 else:
 
                     # allows the server to list all the accounts, once all accounts are listed, prompts 

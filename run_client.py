@@ -5,12 +5,12 @@ import math
 import time
 import uuid
 
-set_port = 8888
+set_port = 8889
 #[uuid: account info ]
 
 #account info is an object
 #recipients: queue of undelivered messages, logged in or not 
-#login TODO- if you login and you hvave undelivered messages, want to send those
+#login TODO- if you login and you have undelivered messages, want to send those
 
 #this source code from https://docs.python.org/3/howto/sockets.html
 
@@ -33,26 +33,30 @@ class ClientSocket:
       self.client = client
 
   # basic get/set
+
   def getStatus(self):
     return self.logged_in
 
   def setStatus(self, update_status):
     self.logged_in = update_status
 
+  def getUsername(self):
+    return self.username
+
   def getPassword(self):
     return self.password
-
-  def getMessages(self):
-    return self.messages
 
   def setPassword(self, password):
     self.password = password
 
+  def getMessages(self):
+    return self.messages
+
   def emptyMessages(self):
     self.messages = []
 
-  def addMessage(self, message_tuple):
-    self.messages.append(message_tuple)
+  def addMessage(self, message_string):
+    self.messages.append(message_string)
 
 
   # helper function to create an account
@@ -75,6 +79,14 @@ class ClientSocket:
 
     confirmation_from_server = self.client.recv(1024).decode()
     print(confirmation_from_server)
+
+
+  def parse_live_message(self, message):
+    # message format is senderUUID_message
+    # UUID is 36 characters total
+    # you are not allowed to encode tuples; thus, use string format
+    # return is of the format (sender UUID, message)
+    return (message[:36], message[37:])
 
 
   # helper function to login to a client account
@@ -155,6 +167,16 @@ class ClientSocket:
       self.logged_in = True
       self.username = message
 
+      print(self.getMessages())
+      
+      # want to receive all undelivered messages
+      for received_msg in self.getMessages():
+        # get Messages() has 
+        sender_userrname, msg = self.parse_live_message(received_msg)
+        print("Message from " + sender_userrname + ": " + msg)
+      
+      self.emptyMessages()
+
 
   def delete_client_account(self, message, host, port):
 
@@ -194,7 +216,6 @@ class ClientSocket:
         Type 'login' to log into your account.
         Type 'create' to create a new account.
         Type 'exit' to disconnect from server/log out.
-        Type 'delete' to delete your account.
         """)
 
         # login function
@@ -204,7 +225,6 @@ class ClientSocket:
 
         # create function
         elif message.lower().strip() == 'create':
-          print("create_client")
           self.create_client_username(message, host, port)
       
         # exit function- may want to exit early
@@ -243,16 +263,20 @@ class ClientSocket:
 
           else:
             # send the message to recipient
-            self.client.sendto(('sendmsg' + message).encode(), (host, port))
+            self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
             data = self.client.recv(1024).decode()
 
             # if username is found, server will return 'User found. What is your message: '
             if data == "User found. Please enter your message: ":
               message = input(data)
-
+              self.client.sendto(message.encode(), (host, port))
+              # receive confirmation from the server that it was delivered
+              data = self.client.recv(1024).decode()
             
             # while loop to keep sending messages to this person until you enter 'stop'
               #while message[4: ] != "stop":
+            
+            # honestly, is this even necessary? it's a nice elegant thing but do we gotttta do it?
 
             # then want to send message to person 
 
@@ -260,9 +284,13 @@ class ClientSocket:
 
 
             # if username is not found, server will say 'User not found'.
-
+            #else:
+            #  print(data)
             # re prompt message
 
+            # COMMENT: message from server was there because before it was client- server interaction
+            # now, we do not need to get the server to reprompt the client with something
+            # will we ever need 
             print('Message from server: ' + data)
           
           message = input("To send a message, enter the recipient username or 'exit' to leave program or 'delete' to delete your account: ")
