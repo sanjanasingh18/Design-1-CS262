@@ -167,13 +167,13 @@ class ClientSocket:
       self.logged_in = True
       self.username = message
 
-      print(self.getMessages())
-      
+      print('Available messages', self.getMessages())
+
       # want to receive all undelivered messages
       for received_msg in self.getMessages():
         # get Messages() has 
-        sender_userrname, msg = self.parse_live_message(received_msg)
-        print("Message from " + sender_userrname + ": " + msg)
+        sender_username, msg = self.parse_live_message(received_msg)
+        print("Message from " + sender_username + ": " + msg)
       
       self.emptyMessages()
 
