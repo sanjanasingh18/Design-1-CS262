@@ -5,7 +5,7 @@ import math
 import time
 import uuid
 
-set_port = 8886
+set_port = 8887
 #[uuid: account info ]
 
 #account info is an object
@@ -73,7 +73,6 @@ class ClientSocket:
 
     # update the password in the client side
     self.password = pwd_client
-    print(self.password)
 
     self.client.sendto((pwd_client).encode(), (host, port))
 
@@ -240,7 +239,12 @@ class ClientSocket:
       # can only enter loop if you are logged in
       if self.logged_in:
 
-        message = input("To send a message, enter the recipient username or 'exit' to leave program or 'delete' to delete your account: ")
+        message = input("""
+        To send a message, enter the recipient username, 
+        'listaccts' to list all active usernames, 
+        'exit' to leave program, or 
+        'delete' to delete your account: 
+        """)
         
         # now, allow the client + server to interact until it says to exit
         # message = input('Reply to server: ')
@@ -261,6 +265,11 @@ class ClientSocket:
           # if they ask to create or delete given that you are currently logged in, throw an error
           elif message.lower().strip() == 'login':
             print("Error: you are currently logged in to an account. Type 'log out' to proceed and then log into another account.")
+
+          elif message.lower().strip() == 'listaccts':
+            self.client.sendto(message.lower().strip().encode(), (host, port))
+            data = self.client.recv(1024).decode()
+            print('Usernames: ' + data)
 
           else:
             # send the message to recipient

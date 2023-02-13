@@ -4,9 +4,10 @@ import socket
 import math
 import time
 import uuid
+import threading
 from run_client import ClientSocket
 
-set_port = 8886
+set_port = 8887
 #this source code from https://docs.python.org/3/howto/sockets.html
 
 class Server:
@@ -244,6 +245,8 @@ class Server:
                 
                 # check if connection closed
                 if not data:
+                    # will be - thread.join ()
+                    # close thread
                     break
 
                 print('Message from client: ' + data)
@@ -267,18 +270,22 @@ class Server:
                     # data parsing works correctly
                     # print(data, data.lower().strip()[7:43], data.lower()[44:])
                     self.deliver_message(data.lower().strip()[7:43], data.lower()[44:], host, port, conn)
-                else:
-
-                    # allows the server to list all the accounts, once all accounts are listed, prompts 
-                    # server to list all accounts again or type a message to send to client
-                    message = input("Reply to client or type 'list accounts' to list all accounts: ")
-                    while message.lower().strip() == lst_acc_cmd:
-                        print('Account UUIDs: ' + str(list(self.account_list.keys())))
-                        message = input("Reply to client or type 'list accounts' to list all accounts: ")
+                elif data.lower().strip()[:9] == 'listaccts':
+                    print('list accounts')
+                    message = str(list(self.account_list.keys()))
                     conn.sendto(message.encode(), (host, port))
+                # else:
+
+                #     # allows the server to list all the accounts, once all accounts are listed, prompts 
+                #     # server to list all accounts again or type a message to send to client
+                #     message = input("Reply to client or type 'list accounts' to list all accounts: ")
+                #     while message.lower().strip() == lst_acc_cmd:
+                #         print('Account UUIDs: ' + str(list(self.account_list.keys())))
+                #         message = input("Reply to client or type 'list accounts' to list all accounts: ")
+                #     conn.sendto(message.encode(), (host, port))
             
             # need to continuously scan for 'exit' to exit the server. TODO- fix this
-            message = input("Type 'exit' to close the server, 'list accounts' to list all accounts, or press enter to continue: ")
+            # message = input("Type 'exit' to close the server, 'list accounts' to list all accounts, or press enter to continue: ")
             
             # prompts the user for input until the server inputs exit to close or just presses
             # enter to continue
