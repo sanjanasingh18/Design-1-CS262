@@ -5,7 +5,7 @@ import math
 import time
 import uuid
 
-set_port = 8889
+set_port = 8886
 #[uuid: account info ]
 
 #account info is an object
@@ -86,7 +86,7 @@ class ClientSocket:
     # UUID is 36 characters total
     # you are not allowed to encode tuples; thus, use string format
     # return is of the format (sender UUID, message)
-    return (message[:36], message[37:])
+    return (message[:36], message[36:])
 
 
   # helper function to login to a client account
@@ -168,7 +168,7 @@ class ClientSocket:
       self.logged_in = True
       self.username = message
 
-      available_msgs = data[30:]
+      available_msgs = data[30:].split('sanj<3soph')[1:]
       print('Available messages', available_msgs)
 
       

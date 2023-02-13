@@ -6,7 +6,7 @@ import time
 import uuid
 from run_client import ClientSocket
 
-set_port = 8889
+set_port = 8886
 #this source code from https://docs.python.org/3/howto/sockets.html
 
 class Server:
@@ -139,8 +139,8 @@ class Server:
 
             if password == self.account_list.get(username.strip()).getPassword():
                 
-                message = 'You have logged in. Thank you!'
-                print(message)
+                confirmation = 'You have logged in. Thank you!'
+                print(confirmation)
 
                 self.account_list.get(username.strip())
 
@@ -152,12 +152,12 @@ class Server:
                     for message in msgs:
                         str_msgs += 'sanj<3soph' + message
                     # messages = self.account_list.get(username.strip()).getMessages()
-                    message += str_msgs
+                    confirmation += str_msgs
 
                     # clear all delivered messages as soon as possible to address concurent access
                     self.account_list.get(username.strip()).emptyMessages()
-                
-                conn.sendto(message.encode(), (host, port))
+                print(confirmation)
+                conn.sendto(confirmation.encode(), (host, port))
                 # send messages to the client to be read
                 # conn.sendto(messages.encode(), (host, port))
                 
