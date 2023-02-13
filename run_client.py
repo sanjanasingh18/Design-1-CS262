@@ -5,7 +5,7 @@ import math
 import time
 import uuid
 
-set_port = 8888
+set_port = 8889
 #[uuid: account info ]
 
 #account info is an object
@@ -113,7 +113,7 @@ class ClientSocket:
     self.client.sendto(pwd_input.encode(), (host, port))
 
     data = self.client.recv(1024).decode()
-
+    print(data, 'output')
     while data[:30] != 'You have logged in. Thank you!':
       
       # allow them to exit

@@ -6,7 +6,7 @@ import time
 import uuid
 from run_client import ClientSocket
 
-set_port = 8888
+set_port = 8889
 #this source code from https://docs.python.org/3/howto/sockets.html
 
 class Server:
@@ -146,7 +146,7 @@ class Server:
 
                 # want to receive all undelivered messages
                 msgs = self.account_list.get(username.strip()).getMessages()
-
+                print('messages', msgs)
                 if msgs:
                     str_msgs = ''
                     for message in msgs:
