@@ -70,7 +70,7 @@ class Server:
         # server will receive what the message the client wants to send is 
         message = conn.recv(1024).decode()
         
-        # regardless of client status, add the message to the recipient queue
+        # regardless of client status (logged in or not), add the message to the recipient queue
         self.add_message_to_queue(sender_username, recipient_username, message)
 
         # print + deliver confirmation
