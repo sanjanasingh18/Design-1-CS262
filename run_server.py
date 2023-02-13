@@ -6,7 +6,7 @@ import time
 import uuid
 from run_client import ClientSocket
 
-set_port = 8889
+set_port = 8888
 #this source code from https://docs.python.org/3/howto/sockets.html
 
 class Server:
@@ -45,8 +45,10 @@ class Server:
     # if the recipient isn't logged in, add the message to the queue
     def add_message_to_queue(self, sender_username, recipient_username, message):
         # queue format is strings of sender_username + "" + message
-        message_string = sender_username + "" + message
+        message_string = sender_username + message
+        print('pre', self.account_list.get(recipient_username).getMessages())
         self.account_list.get(recipient_username).addMessage(message_string)
+        print('post', self.account_list.get(recipient_username).getMessages())
 
 
     # returns True upon successful delivery. returns False if it fails.
@@ -136,9 +138,31 @@ class Server:
             print("Username found")
 
             if password == self.account_list.get(username.strip()).getPassword():
+                
                 message = 'You have logged in. Thank you!'
                 print(message)
+
+                self.account_list.get(username.strip())
+
+                # want to receive all undelivered messages
+                msgs = self.account_list.get(username.strip()).getMessages()
+
+                if msgs:
+                    str_msgs = ''
+                    for message in msgs:
+                        str_msgs += 'sanj<3soph' + message
+                    # messages = self.account_list.get(username.strip()).getMessages()
+                    message += str_msgs
+
+                    # clear all delivered messages as soon as possible to address concurent access
+                    self.account_list.get(username.strip()).emptyMessages()
+                
                 conn.sendto(message.encode(), (host, port))
+                # send messages to the client to be read
+                # conn.sendto(messages.encode(), (host, port))
+                
+
+
             else:
                 print("Account not found.")
                 message = 'Error'

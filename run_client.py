@@ -5,7 +5,7 @@ import math
 import time
 import uuid
 
-set_port = 8889
+set_port = 8888
 #[uuid: account info ]
 
 #account info is an object
@@ -114,7 +114,7 @@ class ClientSocket:
 
     data = self.client.recv(1024).decode()
 
-    while data != 'You have logged in. Thank you!':
+    while data[:30] != 'You have logged in. Thank you!':
       
       # allow them to exit
       message = input("""We were unable to find an account associated with that username and password combination.
@@ -162,21 +162,22 @@ class ClientSocket:
         data = self.client.recv(1024).decode()
     
     # can exit while loop on success (logged in) or on a break 
-    if data == 'You have logged in. Thank you!':
+    print('love is in the air', data)
+    if data[:30] == 'You have logged in. Thank you!':
       print("Successfully logged in.")
       self.logged_in = True
       self.username = message
 
-      print('Available messages', self.getMessages())
+      available_msgs = data[30:]
+      print('Available messages', available_msgs)
 
+      
       # want to receive all undelivered messages
-      for received_msg in self.getMessages():
+      for received_msg in available_msgs:
         # get Messages() has 
         sender_username, msg = self.parse_live_message(received_msg)
         print("Message from " + sender_username + ": " + msg)
       
-      self.emptyMessages()
-
 
   def delete_client_account(self, message, host, port):
 
