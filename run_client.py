@@ -87,6 +87,14 @@ class ClientSocket:
     # return is of the format (sender UUID, message)
     return (message[:36], message[36:])
 
+      
+  def deliver_available_msgs(self, available_msgs):
+    # want to receive all undelivered messages
+    for received_msg in available_msgs:
+      # get Messages() has 
+      sender_username, msg = self.parse_live_message(received_msg)
+      print("Message from " + sender_username + ": " + msg)
+
 
   # helper function to login to a client account
   def login_client_account(self, message, host, port):
@@ -112,7 +120,7 @@ class ClientSocket:
     self.client.sendto(pwd_input.encode(), (host, port))
 
     data = self.client.recv(1024).decode()
-    print(data, 'output')
+
     while data[:30] != 'You have logged in. Thank you!':
       
       # allow them to exit
@@ -166,14 +174,9 @@ class ClientSocket:
       self.logged_in = True
       self.username = message
 
-      available_msgs = data[30:].split('sanj<3soph')[1:]
-      
-      # want to receive all undelivered messages
-      for received_msg in available_msgs:
-        # get Messages() has 
-        sender_username, msg = self.parse_live_message(received_msg)
-        print("Message from " + sender_username + ": " + msg)
-      
+      available_msgs = data[30:].split('we_love_cs262')[1:]
+      self.deliver_available_msgs(available_msgs)
+
 
   def delete_client_account(self, message, host, port):
 
@@ -282,6 +285,10 @@ class ClientSocket:
             # will we ever need 
             print('Message from server: ' + data)
           
+          data = self.client.recv(1024).decode()
+          available_msgs = data.split('we_love_cs262')[1:]
+          self.deliver_available_msgs(available_msgs)
+
           message = input("To send a message, enter the recipient username or 'exit' to leave program or 'delete' to delete your account: ")
 
         self.logged_in = False

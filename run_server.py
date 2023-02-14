@@ -103,6 +103,25 @@ class Server:
         self.account_list.get(username.strip()).setPassword(data)
         message = "Your password is confirmed to be " + data
         conn.sendto(message.encode(), (host, port))
+        
+        return username
+
+    # send messages to the client that are in the deliver queue
+    def send_client_messages(self, client_username, host, port, conn, prefix=''):
+        # want to receive all undelivered messages
+        final_msg = prefix
+        msgs = self.account_list.get(client_username).getMessages()
+
+        if msgs:
+            str_msgs = ''
+            for message in msgs:
+                str_msgs += 'we_love_cs262' + message
+            final_msg += str_msgs
+
+            # clear all delivered messages as soon as possible to address concurent access
+            self.account_list.get(client_username).emptyMessages()
+        conn.sendto(final_msg.encode(), (host, port))
+        conn.sendto(final_msg.encode(), (host, port))
 
 
     # function to log in to an account
@@ -116,29 +135,11 @@ class Server:
         # ask for login and password and then verify if it works
         if (username.strip() in self.account_list):
             # get the password corresponding to this
-            print("Username found")
 
             if password == self.account_list.get(username.strip()).getPassword():
-                
                 confirmation = 'You have logged in. Thank you!'
-                print(confirmation)
-
-                self.account_list.get(username.strip())
-
-                # want to receive all undelivered messages
-                msgs = self.account_list.get(username.strip()).getMessages()
-                print('messages', msgs)
-                if msgs:
-                    str_msgs = ''
-                    for message in msgs:
-                        str_msgs += 'sanj<3soph' + message
-                    # messages = self.account_list.get(username.strip()).getMessages()
-                    confirmation += str_msgs
-
-                    # clear all delivered messages as soon as possible to address concurent access
-                    self.account_list.get(username.strip()).emptyMessages()
-                print(confirmation)
-                conn.sendto(confirmation.encode(), (host, port))
+                self.send_client_messages(username.strip(), host, port, conn, confirmation)
+                return username.strip()
                 
             else:
                 print("Account not found.")
@@ -150,6 +151,7 @@ class Server:
             if password == self.account_list.get(username.strip()[5:]).getPassword():
                 message = 'You have logged in. Thank you!'
                 conn.sendto(message.encode(), (host, port))
+                return username.strip()[5:]
             else:
                 print("Account not found.")
                 message = 'Error'
@@ -187,6 +189,7 @@ class Server:
         return self.account_list.keys()
 
     def server_to_client(self, host, conn, port):
+        curr_user = ''
         while True:
             # receive from client
             data = conn.recv(1024).decode()
@@ -200,10 +203,10 @@ class Server:
 
             # check if data equals 'login'- take substring as we send login + username to server
             if data.lower().strip()[:5] == 'login':
-                self.login_account(host, port, conn)
+                curr_user = self.login_account(host, port, conn)
 
             elif data.lower().strip()[:6] == 'create':
-                self.create_username(host, port, conn)
+                curr_user = self.create_username(host, port, conn)
 
             # check if data equals 'delete'- take substring as we send  delete + username to server
             elif data.lower().strip()[:6] == 'delete':
@@ -220,6 +223,8 @@ class Server:
             elif data.lower().strip()[:9] == 'listaccts':
                 message = str(list(self.account_list.keys()))
                 conn.sendto(message.encode(), (host, port))
+
+            self.send_client_messages(curr_user, host, port, conn)
                     
     def server_program(self):
         # changed to the 
