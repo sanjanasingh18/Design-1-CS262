@@ -13,7 +13,11 @@ set_port = 8887
 
 class Server:
     curr_user = ''
+
+    # mutex lock so only one thread can access account_list at a given time
+    # TODO need this to be a recursive mutex
     account_list_lock = threading.Lock()
+
 
     def __init__(self, sock=None):
         # want to set up a server socket as we did with the sample code
@@ -31,7 +35,10 @@ class Server:
 
     def is_username_valid(self, recipient_username):
         # cannot be in account_list (must be a unique username)
-        return recipient_username in self.account_list
+        # TODO- lock mutex
+        result =  recipient_username in self.account_list
+        # TODO- unlock mutex
+        return result
 
     
     # function to get a user's login status from the account_list
@@ -39,7 +46,10 @@ class Server:
         # check if the username is valid
         if self.is_username_valid(username):
             # get the object then access the user status using getStatus()
-            return self.account_list.get(username).getStatus()
+            # TODO- lock mutex
+            result =  self.account_list.get(username).getStatus()
+            # TODO- unlock mutex
+            return result
         
         # if the username is invalid, return error
         return "Recipient username is not valid."
@@ -49,7 +59,9 @@ class Server:
     def add_message_to_queue(self, sender_username, recipient_username, message):
         # queue format is strings of sender_username + "" + message
         message_string = sender_username + message
+        # TODO- lock mutex
         self.account_list.get(recipient_username).addMessage(message_string)
+        # TODO- unlock mutex
 
 
     # returns True upon successful delivery. returns False if it fails.
@@ -85,22 +97,30 @@ class Server:
 
     # function we use to create an account/username for a new user
     def create_username(self, host, port, conn):
+
+        # HI- SS I went in here and cleaned up this code bc its horrible 
+
         # server will generate UUID, print UUID, send info to client, and then add it to the dict
-        username = uuid.uuid4()
-        print("Unique username generated for client is "+ str(username) + ".")
-        message = str(username)
-        conn.sendto(message.encode(), (host, port))
+        username = str(uuid.uuid4())
+        print("Unique username generated for client is "+ username + ".")
+        conn.sendto(username.encode(), (host, port))
 
         # add (username: clientSocket object where clientSocket includes log-in status,
         # username, password, and queue of undelivered messages
         # it will initialize a new account
-        self.account_list[message] = ClientSocket()
-        username = message
+
+        # TODO- lock mutex
+        self.account_list[username] = ClientSocket()
+        # TODO- unlock mutex
 
         # client will send back a password + send over confirmation
         data = conn.recv(1024).decode()
         # update the password in the object that is being stored in the dictionary
+
+        # TODO- lock mutex
         self.account_list.get(username.strip()).setPassword(data)
+        # TODO- unlock mutex
+
         message = "Your password is confirmed to be " + data
         conn.sendto(message.encode(), (host, port))
         
@@ -110,6 +130,12 @@ class Server:
     def send_client_messages(self, client_username, host, port, conn, prefix=''):
         # want to receive all undelivered messages
         final_msg = prefix
+
+        # note that we hold the mutex in this entire area- if we let go of mutex + reacquire to
+        # empty messages we may obtain new messages in that time and then empty messages
+        # that have not yet been read
+
+        # TODO- lock mutex
         msgs = self.account_list.get(client_username).getMessages()
 
         if msgs:
@@ -120,6 +146,9 @@ class Server:
 
             # clear all delivered messages as soon as possible to address concurent access
             self.account_list.get(client_username).emptyMessages()
+        
+        # TODO- unlock mutex
+
         conn.sendto(final_msg.encode(), (host, port))
 
 
@@ -132,6 +161,9 @@ class Server:
 
         password = conn.recv(1024).decode()
         # ask for login and password and then verify if it works
+
+        # TODO- lock mutex
+
         if (username.strip() in self.account_list):
             # get the password corresponding to this
 
@@ -184,8 +216,12 @@ class Server:
     # function to list all active (non-deleted) accounts
     # add a return statement so it is easier to Unittest
     def list_accounts(self):
-        print(self.account_list.keys())
-        return self.account_list.keys()
+
+        # TODO- lock mutex        
+        listed_accounts = str(list(self.account_list.keys()))
+        # TODO- unlock mutex
+
+        return listed_accounts
 
     def server_to_client(self, host, conn, port):
         curr_user = ''
@@ -219,9 +255,9 @@ class Server:
                 # print(data, data.lower().strip()[7:43], data.lower()[44:])
                 self.deliver_message(data.lower().strip()[7:43], data.lower()[44:], host, port, conn)
             
+            # check if client request is to list all accounts
             elif data.lower().strip()[:9] == 'listaccts':
-                message = str(list(self.account_list.keys()))
-                conn.sendto(message.encode(), (host, port))
+                conn.sendto(self.list_accounts().encode(), (host, port))
 
             self.send_client_messages(curr_user, host, port, conn)
                     
