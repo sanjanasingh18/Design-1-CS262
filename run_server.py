@@ -121,7 +121,6 @@ class Server:
             # clear all delivered messages as soon as possible to address concurent access
             self.account_list.get(client_username).emptyMessages()
         conn.sendto(final_msg.encode(), (host, port))
-        conn.sendto(final_msg.encode(), (host, port))
 
 
     # function to log in to an account
