@@ -4,6 +4,7 @@ import socket
 import math
 import time
 import uuid
+from _thread import *
 import threading
 from run_client import ClientSocket
 
@@ -12,6 +13,7 @@ set_port = 8887
 
 class Server:
     curr_user = ''
+    account_list_lock = threading.Lock()
 
     def __init__(self, sock=None):
         # want to set up a server socket as we did with the sample code
@@ -47,9 +49,7 @@ class Server:
     def add_message_to_queue(self, sender_username, recipient_username, message):
         # queue format is strings of sender_username + "" + message
         message_string = sender_username + message
-        print('pre', self.account_list.get(recipient_username).getMessages())
         self.account_list.get(recipient_username).addMessage(message_string)
-        print('post', self.account_list.get(recipient_username).getMessages())
 
 
     # returns True upon successful delivery. returns False if it fails.
@@ -81,26 +81,6 @@ class Server:
         print(confirmation_message_sent)
         conn.sendto(confirmation_message_sent.encode(), (host, port))
         return True
-
-        # update from the logic below
-        """
-        if user_status:
-            # if so, deliver immediately
-            # cannot encode a message as a tuple. Must instead parse string
-            message_to_recipient = sender_username + "_" + message
-
-            # what if both accounts are logged in??? who is this sending it to 
-            # TODO - answer this question ^
-            # conn.sendto(message_to_recipient.encode(), (host, port))
-            print('Delivered message ' + message + " to " + recipient_username + " from " + sender_username)
-
-        # if not logged in, add to recipient queue
-        else:
-            # add to queue for recipient
-            self.add_message_to_queue(sender_username, recipient_username, message)
-            # print on server side
-            print('Delivered message ' + message + " to " + recipient_username + " from " + sender_username)
-        """
 
 
     # function we use to create an account/username for a new user
@@ -159,11 +139,7 @@ class Server:
                     self.account_list.get(username.strip()).emptyMessages()
                 print(confirmation)
                 conn.sendto(confirmation.encode(), (host, port))
-                # send messages to the client to be read
-                # conn.sendto(messages.encode(), (host, port))
                 
-
-
             else:
                 print("Account not found.")
                 message = 'Error'
@@ -171,24 +147,16 @@ class Server:
 
         elif (username.strip()[5:] in self.account_list):
             # get the password corresponding to this
-            print("Username 5 found")
-
-            # TODO issue- get password keeps coming out blank. help!!!
-
-            print(self.account_list.get(username.strip()).getPassword(), "pwd")
             if password == self.account_list.get(username.strip()[5:]).getPassword():
                 message = 'You have logged in. Thank you!'
-                print(message)
                 conn.sendto(message.encode(), (host, port))
             else:
-                print("PWD NOT FOUND- this is a temp print statment for debugging")
                 print("Account not found.")
                 message = 'Error'
                 conn.sendto(message.encode(), (host, port))
 
         else:
             # want to prompt the client to either try again or create account
-            print("username not found- this is a temp print statment for debugging")
             print("Account not found.")
             message = 'Error'
             conn.sendto(message.encode(), (host, port))
@@ -218,7 +186,41 @@ class Server:
         print(self.account_list.keys())
         return self.account_list.keys()
 
+    def server_to_client(self, host, conn, port):
+        while True:
+            # receive from client
+            data = conn.recv(1024).decode()
+            
+            # check if connection closed- if so, close thread
+            if not data:
+                # close thread
+                return
 
+            print('Message from client: ' + data)
+
+            # check if data equals 'login'- take substring as we send login + username to server
+            if data.lower().strip()[:5] == 'login':
+                self.login_account(host, port, conn)
+
+            elif data.lower().strip()[:6] == 'create':
+                self.create_username(host, port, conn)
+
+            # check if data equals 'delete'- take substring as we send  delete + username to server
+            elif data.lower().strip()[:6] == 'delete':
+                # data parsing works correctly
+                # print(data, data.lower().strip(), data.lower().strip()[6:])
+                self.delete_account(data.lower()[6:], host, port, conn)
+
+            # check if client request to send a message
+            elif data.lower().strip()[:7] == 'sendmsg':
+                # data parsing works correctly
+                # print(data, data.lower().strip()[7:43], data.lower()[44:])
+                self.deliver_message(data.lower().strip()[7:43], data.lower()[44:], host, port, conn)
+            
+            elif data.lower().strip()[:9] == 'listaccts':
+                message = str(list(self.account_list.keys()))
+                conn.sendto(message.encode(), (host, port))
+                    
     def server_program(self):
         # changed to the 
         # server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -228,81 +230,19 @@ class Server:
         print(host)
         port = set_port
         self.server.bind((host, port))
+        self.server.listen()
+        print('server is active')
 
         # while SOMETHING, listen!
         while True:
-            lst_acc_cmd = 'list accounts'
-            self.server.listen()
             conn, addr = self.server.accept()
 
             print(f'{addr} connected to server.')
 
-            # want to see when we have to disconnect- revise this while loop 
-            # and break statement
-            while True:
-                # receive from client
-                data = conn.recv(1024).decode()
-                
-                # check if connection closed
-                if not data:
-                    # will be - thread.join ()
-                    # close thread
-                    break
-
-                print('Message from client: ' + data)
-
-                # check if data equals 'login'- take substring as we send login + username to server
-                if data.lower().strip()[:5] == 'login':
-                    print('server login')
-                    self.login_account(host, port, conn)
-
-                elif data.lower().strip()[:6] == 'create':
-                    self.create_username(host, port, conn)
-
-                # check if data equals 'delete'- take substring as we send  delete + username to server
-                elif data.lower().strip()[:6] == 'delete':
-                    # data parsing works correctly
-                    # print(data, data.lower().strip(), data.lower().strip()[6:])
-                    self.delete_account(data.lower()[6:], host, port, conn)
-
-                # check if client request to send a message
-                elif data.lower().strip()[:7] == 'sendmsg':
-                    # data parsing works correctly
-                    # print(data, data.lower().strip()[7:43], data.lower()[44:])
-                    self.deliver_message(data.lower().strip()[7:43], data.lower()[44:], host, port, conn)
-                elif data.lower().strip()[:9] == 'listaccts':
-                    print('list accounts')
-                    message = str(list(self.account_list.keys()))
-                    conn.sendto(message.encode(), (host, port))
-                # else:
-
-                #     # allows the server to list all the accounts, once all accounts are listed, prompts 
-                #     # server to list all accounts again or type a message to send to client
-                #     message = input("Reply to client or type 'list accounts' to list all accounts: ")
-                #     while message.lower().strip() == lst_acc_cmd:
-                #         print('Account UUIDs: ' + str(list(self.account_list.keys())))
-                #         message = input("Reply to client or type 'list accounts' to list all accounts: ")
-                #     conn.sendto(message.encode(), (host, port))
-            
-            # need to continuously scan for 'exit' to exit the server. TODO- fix this
-            # message = input("Type 'exit' to close the server, 'list accounts' to list all accounts, or press enter to continue: ")
-            
-            # prompts the user for input until the server inputs exit to close or just presses
-            # enter to continue
-            while (message.lower().strip() != 'exit') and (message.lower().strip() != ''):
-                # prints all the UUIDs stored if the server asks to list all the accounts while a client
-                # is not connected.
-               
-                if message.lower().strip() == lst_acc_cmd:
-                    print('Account UUIDs: ' + str(list(self.account_list.keys())))
-
-                message = input("Type 'exit' to close the server, 'list accounts' to list all accounts, or press enter to continue: ")
-                
-            if message.lower().strip() == 'exit':
-                print('You have successfully closed the server.')
-                conn.close()
-                break
-
+            # Start a new thread with this client
+            #start_new_thread(server_to_client, (host, conn, port, ))
+            curr_thread = threading.Thread(target=self.server_to_client, args=(host, conn, port,))
+            curr_thread.start()
 
 if __name__ == '__main__':
     a = Server()

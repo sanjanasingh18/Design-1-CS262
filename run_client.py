@@ -161,15 +161,12 @@ class ClientSocket:
         data = self.client.recv(1024).decode()
     
     # can exit while loop on success (logged in) or on a break 
-    print('love is in the air', data)
     if data[:30] == 'You have logged in. Thank you!':
       print("Successfully logged in.")
       self.logged_in = True
       self.username = message
 
       available_msgs = data[30:].split('sanj<3soph')[1:]
-      print('Available messages', available_msgs)
-
       
       # want to receive all undelivered messages
       for received_msg in available_msgs:
@@ -246,15 +243,11 @@ class ClientSocket:
         'delete' to delete your account: 
         """)
         
-        # now, allow the client + server to interact until it says to exit
-        # message = input('Reply to server: ')
-        
         # continue 
         while message.strip() != 'exit':
 
           # delete account function
           if message.lower().strip() == 'delete':
-            print("delete client")
             self.delete_client_account(message, host, port)
             break
 
@@ -282,21 +275,6 @@ class ClientSocket:
               self.client.sendto(message.encode(), (host, port))
               # receive confirmation from the server that it was delivered
               data = self.client.recv(1024).decode()
-            
-            # while loop to keep sending messages to this person until you enter 'stop'
-              #while message[4: ] != "stop":
-            
-            # honestly, is this even necessary? it's a nice elegant thing but do we gotttta do it?
-
-            # then want to send message to person 
-
-            # receive confirmation that it was sent 
-
-
-            # if username is not found, server will say 'User not found'.
-            #else:
-            #  print(data)
-            # re prompt message
 
             # COMMENT: message from server was there because before it was client- server interaction
             # now, we do not need to get the server to reprompt the client with something
