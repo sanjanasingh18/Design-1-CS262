@@ -243,7 +243,7 @@ class ClientSocket:
         'delete' to delete your account: 
         """)
         
-        # continue 
+        # continue until client asks to exit
         while message.strip() != 'exit':
 
           # delete account function
@@ -259,13 +259,14 @@ class ClientSocket:
           elif message.lower().strip() == 'login':
             print("Error: you are currently logged in to an account. Type 'log out' to proceed and then log into another account.")
 
+          # list all account usernames
           elif message.lower().strip() == 'listaccts':
             self.client.sendto(message.lower().strip().encode(), (host, port))
             data = self.client.recv(1024).decode()
             print('Usernames: ' + data)
 
+          # send message otherwise
           else:
-            # send the message to recipient
             self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
             data = self.client.recv(1024).decode()
 
