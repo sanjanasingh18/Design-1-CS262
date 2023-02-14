@@ -256,11 +256,11 @@ class ClientSocket:
 
           # if they ask to create or delete given that you are currently logged in, throw an error
           elif message.lower().strip() == 'create':
-            print("Error: you must log out before creating a new account. Type 'log out' to proceed.")
+            print("Error: you must log out before creating a new account. Type 'exit' to log out.")
 
           # if they ask to create or delete given that you are currently logged in, throw an error
           elif message.lower().strip() == 'login':
-            print("Error: you are currently logged in to an account. Type 'log out' to proceed and then log into another account.")
+            print("Error: you are currently logged in to an account. Type 'exit' to log out and then log into another account.")
 
           # list all account usernames
           elif message.lower().strip() == 'listaccts':
