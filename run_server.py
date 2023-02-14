@@ -16,7 +16,7 @@ class Server:
 
     # mutex lock so only one thread can access account_list at a given time
     # TODO need this to be a recursive mutex
-    account_list_lock = threading.Lock()
+    #account_list_lock = threading.RLock()
 
 
     def __init__(self, sock=None):
@@ -26,6 +26,10 @@ class Server:
         # format of account_list is [UUID: ClientObject]
         self.account_list = dict()
         
+        # mutex lock so only one thread can access account_list at a given time
+        # need this to be a recursive mutex as some subfunctions call on lock on top of a locked function
+        self.account_list_lock = threading.RLock()
+
         if sock is None:
             self.server = socket.socket(
                             socket.AF_INET, socket.SOCK_STREAM)
@@ -36,8 +40,10 @@ class Server:
     def is_username_valid(self, recipient_username):
         # cannot be in account_list (must be a unique username)
         # TODO- lock mutex
+        self.account_list_lock.acquire()
         result =  recipient_username in self.account_list
         # TODO- unlock mutex
+        self.account_list_lock.release()
         return result
 
     
@@ -47,8 +53,10 @@ class Server:
         if self.is_username_valid(username):
             # get the object then access the user status using getStatus()
             # TODO- lock mutex
+            self.account_list_lock.acquire()
             result =  self.account_list.get(username).getStatus()
             # TODO- unlock mutex
+            self.account_list_lock.release()
             return result
         
         # if the username is invalid, return error
@@ -60,8 +68,10 @@ class Server:
         # queue format is strings of sender_username + "" + message
         message_string = sender_username + message
         # TODO- lock mutex
+        self.account_list_lock.acquire()
         self.account_list.get(recipient_username).addMessage(message_string)
         # TODO- unlock mutex
+        self.account_list_lock.release()
 
 
     # returns True upon successful delivery. returns False if it fails.
@@ -110,16 +120,20 @@ class Server:
         # it will initialize a new account
 
         # TODO- lock mutex
+        self.account_list_lock.acquire()
         self.account_list[username] = ClientSocket()
         # TODO- unlock mutex
+        self.account_list_lock.release()
 
         # client will send back a password + send over confirmation
         data = conn.recv(1024).decode()
         # update the password in the object that is being stored in the dictionary
 
         # TODO- lock mutex
+        self.account_list_lock.acquire()
         self.account_list.get(username.strip()).setPassword(data)
         # TODO- unlock mutex
+        self.account_list_lock.release()
 
         message = "Your password is confirmed to be " + data
         conn.sendto(message.encode(), (host, port))
@@ -136,6 +150,7 @@ class Server:
         # that have not yet been read
 
         # TODO- lock mutex
+        self.account_list_lock.acquire()
         msgs = self.account_list.get(client_username).getMessages()
 
         if msgs:
@@ -148,6 +163,7 @@ class Server:
             self.account_list.get(client_username).emptyMessages()
         
         # TODO- unlock mutex
+        self.account_list_lock.release()
 
         conn.sendto(final_msg.encode(), (host, port))
 
@@ -163,16 +179,22 @@ class Server:
         # ask for login and password and then verify if it works
 
         # TODO- lock mutex
+        self.account_list_lock.acquire()
+        # TODOSS- figure out where to UNLOCK mutex
 
         if (username.strip() in self.account_list):
             # get the password corresponding to this
 
             if password == self.account_list.get(username.strip()).getPassword():
+                #TODO- unlock mutex
+                self.account_list_lock.release()
                 confirmation = 'You have logged in. Thank you!'
                 self.send_client_messages(username.strip(), host, port, conn, confirmation)
                 return username.strip()
                 
             else:
+                #TODO- unlock mutex
+                self.account_list_lock.release()
                 print("Account not found.")
                 message = 'Error'
                 conn.sendto(message.encode(), (host, port))
@@ -180,15 +202,21 @@ class Server:
         elif (username.strip()[5:] in self.account_list):
             # get the password corresponding to this
             if password == self.account_list.get(username.strip()[5:]).getPassword():
+                #TODO- unlock mutex
+                self.account_list_lock.release()
                 message = 'You have logged in. Thank you!'
                 conn.sendto(message.encode(), (host, port))
                 return username.strip()[5:]
             else:
+                #TODO- unlock mutex
+                self.account_list_lock.release()
                 print("Account not found.")
                 message = 'Error'
                 conn.sendto(message.encode(), (host, port))
 
         else:
+            #TODO- unlock mutex
+            self.account_list_lock.release()
             # want to prompt the client to either try again or create account
             print("Account not found.")
             message = 'Error'
@@ -217,9 +245,11 @@ class Server:
     # add a return statement so it is easier to Unittest
     def list_accounts(self):
 
-        # TODO- lock mutex        
+        # TODO- lock mutex 
+        self.account_list_lock.acquire()       
         listed_accounts = str(list(self.account_list.keys()))
         # TODO- unlock mutex
+        self.account_list_lock.release()
 
         return listed_accounts
 
@@ -248,6 +278,7 @@ class Server:
                 # data parsing works correctly
                 # print(data, data.lower().strip(), data.lower().strip()[6:])
                 self.delete_account(data.lower()[6:], host, port, conn)
+                return
 
             # check if client request to send a message
             elif data.lower().strip()[:7] == 'sendmsg':
