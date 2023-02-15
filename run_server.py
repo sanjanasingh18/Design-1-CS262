@@ -14,11 +14,6 @@ set_port = 8887
 class Server:
     curr_user = ''
 
-    # mutex lock so only one thread can access account_list at a given time
-    # TODO need this to be a recursive mutex
-    #account_list_lock = threading.RLock()
-
-
     def __init__(self, sock=None):
         # want to set up a server socket as we did with the sample code
         # want to create a list of accounts for this server and unsent messages
