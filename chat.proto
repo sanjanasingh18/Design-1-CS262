@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package bidirectional;
+
+class UserDetails {
+  int age;
+  int weight;
+  int lenght;
+}
+
+service Bidirectional {
+  // A Bidirectional streaming RPC.
+  //
+  // Accepts a stream of Message sent while a route is being traversed,
+   rpc GetServerResponse(stream Message) returns (stream Message) {}
+}
+
+message Message {
+    string action = 1;
+    string client_username = 2;
+    string client_password = 3;
+    string recipient_username = 4;
+    string message = 5;
+    list available_messages = 6;
+}
