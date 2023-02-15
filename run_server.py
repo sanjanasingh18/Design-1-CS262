@@ -46,22 +46,6 @@ class Server:
         self.account_list_lock.release()
         return result
 
-    
-    # function to get a user's login status from the account_list
-    def get_user_status(self, username):
-        # check if the username is valid
-        if self.is_username_valid(username):
-            # get the object then access the user status using getStatus()
-            # TODO- lock mutex
-            self.account_list_lock.acquire()
-            result =  self.account_list.get(username).getStatus()
-            # TODO- unlock mutex
-            self.account_list_lock.release()
-            return result
-        
-        # if the username is invalid, return error
-        return "Recipient username is not valid."
-
 
     # if the recipient isn't logged in, add the message to the queue
     def add_message_to_queue(self, sender_username, recipient_username, message):
@@ -76,12 +60,8 @@ class Server:
 
     # returns True upon successful delivery. returns False if it fails.
     def deliver_message(self, sender_username, recipient_username, host, port, conn):
-        # is the recipient account logged in?
-        user_status = self.get_user_status(recipient_username)
-        print('user status of the recipient', user_status)
-
-        # Checks if it is sent to a valid user
-        if user_status == "Recipient username is not valid.":
+        # If username is invalid, throw error message
+        if not self.is_username_valid(recipient_username): #== "Recipient username is not valid.":
             recipient_not_found = "User not found."
             print(recipient_not_found)
             conn.sendto(recipient_not_found.encode(), (host, port))
