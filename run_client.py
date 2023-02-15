@@ -1,5 +1,4 @@
 import os
-import pandas as pd
 import socket
 import math
 import time
@@ -7,7 +6,7 @@ import uuid
 
 set_port = 8888
 set_host = ''
-# host = 'dhcp-10-250-7-238.harvard.edu'
+# set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
 
 #account info is an object
@@ -202,8 +201,6 @@ class ClientSocket:
       host = set_host
       port = set_port
 
-      # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      # client.connect((host, port))
       self.client.connect((host, port))
 
       # handle initial information flow- either will login or create a new account
