@@ -8,7 +8,7 @@ from _thread import *
 import threading
 from run_client import ClientSocket
 
-set_port = 8887
+set_port = 8888
 #this source code from https://docs.python.org/3/howto/sockets.html
 
 class Server:
@@ -216,6 +216,7 @@ class Server:
             # want to prompt the client to either try again or create account
             # NOTE this print statement is just internal... client will not see the account list
             #print("Key not found: see current account list", self.account_list)
+            print('error?')
             message = 'Error deleting account'
             conn.sendto(message.encode(), (host, port))
 
@@ -256,6 +257,7 @@ class Server:
             elif data.lower().strip()[:6] == 'delete':
                 # data parsing works correctly
                 # print(data, data.lower().strip(), data.lower().strip()[6:])
+                #self.send_client_messages(curr_user, host, port, conn)
                 self.delete_account(data.lower()[6:], host, port, conn)
                 return
 
@@ -264,7 +266,6 @@ class Server:
                 # data parsing works correctly
                 # print(data, data.lower().strip()[7:43], data.lower()[44:])
                 self.deliver_message(data.lower().strip()[7:43], data.lower()[44:], host, port, conn)
-                #self.send_client_messages(curr_user, host, port, conn)
 
 
             # check if client request is to list all accounts

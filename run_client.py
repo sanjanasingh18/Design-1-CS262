@@ -5,7 +5,7 @@ import math
 import time
 import uuid
 
-set_port = 8887
+set_port = 8888
 #[uuid: account info ]
 
 #account info is an object
@@ -173,8 +173,9 @@ class ClientSocket:
       self.logged_in = True
       self.username = message
 
-      available_msgs = data[30:].split('we_love_cs262')[1:]
-      self.deliver_available_msgs(available_msgs)
+      if data[30:] != 'No messages available':
+          available_msgs = data[30:].split('we_love_cs262')[1:]
+          self.deliver_available_msgs(available_msgs)
 
 
   def delete_client_account(self, message, host, port):
@@ -188,6 +189,7 @@ class ClientSocket:
     
     #server sends back status of whether it worked
     data = self.client.recv(1024).decode()
+    print('delete recieved', data)
     if data == 'Account successfully deleted.':
       self.logged_in = False
       print("Successfully deleted account.")
@@ -251,7 +253,14 @@ class ClientSocket:
 
           # delete account function
           if message.lower().strip() == 'delete':
-            self.delete_client_account(message, host, port)
+            # check remaining msgs
+            message = 'msgspls!'
+            self.client.sendto(message.encode(), (host, port))
+            data = self.client.recv(1024).decode()
+            if data != 'No messages available':
+              available_msgs = data.split('we_love_cs262')[1:]
+              self.deliver_available_msgs(available_msgs)
+            self.delete_client_account('delete', host, port)
             break
 
           # if they ask to create or delete given that you are currently logged in, throw an error
@@ -301,12 +310,15 @@ class ClientSocket:
           'delete' to delete your account: 
           """)
 
-        message = 'msgspls!'
-        self.client.sendto(message.encode(), (host, port))
-        data = self.client.recv(1024).decode()
-        if data != 'No messages available':
-          available_msgs = data.split('we_love_cs262')[1:]
-          self.deliver_available_msgs(available_msgs)
+        # will only exit while loops on 'exit' or 'delete'
+        # read undelivered messages for exit
+        if message.strip() == 'exit':
+          get_remaining_msgs = 'msgspls!'
+          self.client.sendto(get_remaining_msgs.encode(), (host, port))
+          data = self.client.recv(1024).decode()
+          if data != 'No messages available':
+            available_msgs = data.split('we_love_cs262')[1:]
+            self.deliver_available_msgs(available_msgs)
 
         self.logged_in = False
         print(f'Connection closed.')
