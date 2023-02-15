@@ -301,6 +301,13 @@ class ClientSocket:
           'delete' to delete your account: 
           """)
 
+        message = 'msgspls!'
+        self.client.sendto(message.encode(), (host, port))
+        data = self.client.recv(1024).decode()
+        if data != 'No messages available':
+          available_msgs = data.split('we_love_cs262')[1:]
+          self.deliver_available_msgs(available_msgs)
+
         self.logged_in = False
         print(f'Connection closed.')
         self.client.close()
