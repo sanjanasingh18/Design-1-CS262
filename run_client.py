@@ -6,6 +6,8 @@ import time
 import uuid
 
 set_port = 8888
+set_host = ''
+# host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
 
 #account info is an object
@@ -197,9 +199,7 @@ class ClientSocket:
 
 
   def client_program(self):
-      # host = socket.
-      # host = 'dhcp-10-250-7-238.harvard.edu'
-      host = ''
+      host = set_host
       port = set_port
 
       # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

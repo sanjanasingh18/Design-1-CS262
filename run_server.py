@@ -9,6 +9,9 @@ import threading
 from run_client import ClientSocket
 
 set_port = 8888
+set_host = ''
+# set_host = 'dhcp-10-250-7-238.harvard.edu'
+
 #this source code from https://docs.python.org/3/howto/sockets.html
 
 class Server:
@@ -270,16 +273,11 @@ class Server:
                 self.send_client_messages(curr_user, host, port, conn)
                     
     def server_program(self):
-        # changed to the 
-        # server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # used socket.gethostname() to get the host name to connect between computers
-        # host = 'dhcp-10-250-7-238.harvard.edu'
-        host = ''
-        print(host)
+        host = set_host
         port = set_port
         self.server.bind((host, port))
         self.server.listen()
-        print('Server is active.')
+        print('Server is active')
 
         # while SOMETHING, listen!
         while True:
