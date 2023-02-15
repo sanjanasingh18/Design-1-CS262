@@ -214,10 +214,8 @@ class Server:
             conn.sendto(message.encode(), (host, port))
         else:
             # want to prompt the client to either try again or create account
-            # NOTE this print statement is just internal... client will not see the account list
-            #print("Key not found: see current account list", self.account_list)
-            print('error?')
             message = 'Error deleting account'
+            print(message)
             conn.sendto(message.encode(), (host, port))
 
 
@@ -257,7 +255,6 @@ class Server:
             elif data.lower().strip()[:6] == 'delete':
                 # data parsing works correctly
                 # print(data, data.lower().strip(), data.lower().strip()[6:])
-                #self.send_client_messages(curr_user, host, port, conn)
                 self.delete_account(data.lower()[6:], host, port, conn)
                 return
 
@@ -273,7 +270,6 @@ class Server:
                 conn.sendto(self.list_accounts().encode(), (host, port))
 
             elif data[:8] == "msgspls!":
-                print('im here')
                 self.send_client_messages(curr_user, host, port, conn)
                     
     def server_program(self):
@@ -286,7 +282,7 @@ class Server:
         port = set_port
         self.server.bind((host, port))
         self.server.listen()
-        print('server is active')
+        print('Server is active.')
 
         # while SOMETHING, listen!
         while True:

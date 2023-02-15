@@ -189,7 +189,6 @@ class ClientSocket:
     
     #server sends back status of whether it worked
     data = self.client.recv(1024).decode()
-    print('delete recieved', data)
     if data == 'Account successfully deleted.':
       self.logged_in = False
       print("Successfully deleted account.")
