@@ -5,7 +5,7 @@ import math
 import time
 import uuid
 
-set_port = 8886
+set_port = 8887
 #[uuid: account info ]
 
 #account info is an object
@@ -102,7 +102,6 @@ class ClientSocket:
     # ensure that the server knows that it is the login function
     self.client.sendto(message.encode(), (host, port))
 
-    print("login client account")
     message = input("""
     Please enter your username to log in: 
     """)
@@ -290,12 +289,9 @@ class ClientSocket:
 
           message = 'msgspls!'
           self.client.sendto(message.encode(), (host, port))
-          print('donezo')
           data = self.client.recv(1024).decode()
-          print(data)
           if data != 'No messages available':
             available_msgs = data.split('we_love_cs262')[1:]
-            print(available_msgs)
             self.deliver_available_msgs(available_msgs)
 
           message = input("""

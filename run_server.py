@@ -147,7 +147,6 @@ class Server:
     # function to log in to an account
     def login_account(self, host, port, conn):
         username = conn.recv(1024).decode()
-
         confirm_received = "Confirming that the username has been received."
         conn.sendto(confirm_received.encode(), (host, port))
 
@@ -160,11 +159,13 @@ class Server:
 
         if (username.strip() in self.account_list):
             # get the password corresponding to this
-
             if password == self.account_list.get(username.strip()).getPassword():
                 #TODO- unlock mutex
                 self.account_list_lock.release()
+
                 confirmation = 'You have logged in. Thank you!'
+                conn.sendto(confirmation.encode(), (host, port))
+
                 self.send_client_messages(username.strip(), host, port, conn, confirmation)
                 return username.strip()
                 
@@ -180,8 +181,9 @@ class Server:
             if password == self.account_list.get(username.strip()[5:]).getPassword():
                 #TODO- unlock mutex
                 self.account_list_lock.release()
-                message = 'You have logged in. Thank you!'
-                conn.sendto(message.encode(), (host, port))
+                confirmation = 'You have logged in. Thank you!'
+                conn.sendto(confirmation.encode(), (host, port))
+                self.send_client_messages(username.strip(), host, port, conn, confirmation)
                 return username.strip()[5:]
             else:
                 #TODO- unlock mutex
@@ -197,6 +199,7 @@ class Server:
             print("Account not found.")
             message = 'Error'
             conn.sendto(message.encode(), (host, port))
+
 
 
     def delete_account(self, username, host, port, conn):
