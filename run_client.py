@@ -248,11 +248,6 @@ class ClientSocket:
         
         # continue until client asks to exit
         while message.strip() != 'exit':
-          
-          data = self.client.recv(1024).decode()
-          available_msgs = data[4:].split('we_love_cs262')[1:]
-          print(available_msgs)
-          self.deliver_available_msgs(available_msgs)
 
           # delete account function
           if message.lower().strip() == 'delete':
@@ -291,7 +286,17 @@ class ClientSocket:
             # will we ever need 
             print('Message from server: ' + data)
 
-          message = input("To send a message, enter the recipient username or 'exit' to leave program or 'delete' to delete your account: ")
+          data = self.client.recv(1024).decode()
+          available_msgs = data.split('we_love_cs262')[1:]
+          print(available_msgs)
+          self.deliver_available_msgs(available_msgs)
+
+          message = input("""
+          To send a message, enter the recipient username, 
+          'listaccts' to list all active usernames, 
+          'exit' to leave program, or 
+          'delete' to delete your account: 
+          """)
 
         self.logged_in = False
         print(f'Connection closed.')

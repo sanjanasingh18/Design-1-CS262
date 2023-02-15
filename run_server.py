@@ -118,7 +118,7 @@ class Server:
     # send messages to the client that are in the deliver queue
     def send_client_messages(self, client_username, host, port, conn, prefix=''):
         # want to receive all undelivered messages
-        final_msg = 'msgs' + prefix
+        final_msg = prefix
 
         # note that we hold the mutex in this entire area- if we let go of mutex + reacquire to
         # empty messages we may obtain new messages in that time and then empty messages
