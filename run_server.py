@@ -137,7 +137,7 @@ class Server:
             # clear all delivered messages as soon as possible to address concurent access
             self.account_list.get(client_username).emptyMessages()
         else:
-            final_msg = "No messages available"
+            final_msg += "No messages available"
         # TODO- unlock mutex
         self.account_list_lock.release()
 
@@ -164,8 +164,6 @@ class Server:
                 self.account_list_lock.release()
 
                 confirmation = 'You have logged in. Thank you!'
-                conn.sendto(confirmation.encode(), (host, port))
-
                 self.send_client_messages(username.strip(), host, port, conn, confirmation)
                 return username.strip()
                 
@@ -182,7 +180,6 @@ class Server:
                 #TODO- unlock mutex
                 self.account_list_lock.release()
                 confirmation = 'You have logged in. Thank you!'
-                conn.sendto(confirmation.encode(), (host, port))
                 self.send_client_messages(username.strip(), host, port, conn, confirmation)
                 return username.strip()[5:]
             else:
