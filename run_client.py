@@ -280,14 +280,16 @@ class ClientSocket:
               # receive confirmation from the server that it was delivered
               data = self.client.recv(1024).decode()
 
+              
             # COMMENT: message from server was there because before it was client- server interaction
             # now, we do not need to get the server to reprompt the client with something
             # will we ever need 
             print('Message from server: ' + data)
           
-          #data = self.client.recv(1024).decode()
-          #available_msgs = data.split('we_love_cs262')[1:]
-          #self.deliver_available_msgs(available_msgs)
+          data = self.client.recv(1024).decode()
+          print(data)
+          available_msgs = data.split('we_love_cs262')[1:]
+          self.deliver_available_msgs(available_msgs)
 
           message = input("To send a message, enter the recipient username or 'exit' to leave program or 'delete' to delete your account: ")
 
