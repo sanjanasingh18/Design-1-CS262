@@ -136,7 +136,8 @@ class Server:
 
             # clear all delivered messages as soon as possible to address concurent access
             self.account_list.get(client_username).emptyMessages()
-        
+        else:
+            final_msg = "No messages available"
         # TODO- unlock mutex
         self.account_list_lock.release()
 
@@ -260,12 +261,16 @@ class Server:
                 # data parsing works correctly
                 # print(data, data.lower().strip()[7:43], data.lower()[44:])
                 self.deliver_message(data.lower().strip()[7:43], data.lower()[44:], host, port, conn)
-            
+                #self.send_client_messages(curr_user, host, port, conn)
+
+
             # check if client request is to list all accounts
             elif data.lower().strip()[:9] == 'listaccts':
                 conn.sendto(self.list_accounts().encode(), (host, port))
 
-            self.send_client_messages(curr_user, host, port, conn)
+            elif data[:8] == "msgspls!":
+                print('im here')
+                self.send_client_messages(curr_user, host, port, conn)
                     
     def server_program(self):
         # changed to the 

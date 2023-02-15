@@ -5,7 +5,7 @@ import math
 import time
 import uuid
 
-set_port = 8887
+set_port = 8886
 #[uuid: account info ]
 
 #account info is an object
@@ -248,6 +248,7 @@ class ClientSocket:
         
         # continue until client asks to exit
         while message.strip() != 'exit':
+          
 
           # delete account function
           if message.lower().strip() == 'delete':
@@ -266,6 +267,7 @@ class ClientSocket:
           elif message.lower().strip() == 'listaccts':
             self.client.sendto(message.lower().strip().encode(), (host, port))
             data = self.client.recv(1024).decode()
+            #feedback = self.client.recv(1024).decode()
             print('Usernames: ' + data)
 
           # send message otherwise
@@ -286,10 +288,15 @@ class ClientSocket:
             # will we ever need 
             print('Message from server: ' + data)
 
+          message = 'msgspls!'
+          self.client.sendto(message.encode(), (host, port))
+          print('donezo')
           data = self.client.recv(1024).decode()
-          available_msgs = data.split('we_love_cs262')[1:]
-          print(available_msgs)
-          self.deliver_available_msgs(available_msgs)
+          print(data)
+          if data != 'No messages available':
+            available_msgs = data.split('we_love_cs262')[1:]
+            print(available_msgs)
+            self.deliver_available_msgs(available_msgs)
 
           message = input("""
           To send a message, enter the recipient username, 
