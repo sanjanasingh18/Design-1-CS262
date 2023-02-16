@@ -1,5 +1,9 @@
+import os
 import socket
+import math
+import time
 import uuid
+import chat_pb2
 
 set_port = 8888
 set_host = ''
@@ -18,7 +22,7 @@ class ClientSocket:
   def __init__(self, client=None):
     # we store if the client is currently logged in, their username, password, and 
     # queue of messages that they want to receive
-    # all of these objects are stored in a dictionary on the server of username : ClientSocket object
+    # all of these objects are stored in sa dictionary on the server of username : ClientSocket object
 
     self.logged_in = False
     self.username = ''
@@ -198,9 +202,9 @@ class ClientSocket:
       host = set_host
       port = set_port
 
-      # client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-      # client.connect((host, port))
       self.client.connect((host, port))
+
+      client_buf = chat_pb2.Data()
 
       # handle initial information flow- either will login or create a new account
       
