@@ -198,7 +198,7 @@ class ClientSocket:
     message = "delete" + str(self.username)
     self.client.sendto(message.encode(), (host, port))
     
-    #server sends back status of whether it worked
+    # erver sends back status of whether account was successfully deleted
     data = self.client.recv(1024).decode()
     if data == 'Account successfully deleted.':
       self.logged_in = False
@@ -207,6 +207,7 @@ class ClientSocket:
       print("Unsuccessfully deleted account.")
 
 
+  # this is the main client program that we run- it calls on all subfunctions
   def client_program(self):
       host = set_host
       port = set_port
@@ -214,8 +215,8 @@ class ClientSocket:
       self.client.connect((host, port))
 
       # handle initial information flow- either will login or create a new account
-      
-      # You need to either log in or create first
+      # You need to either log in or create an account first
+
       while not self.logged_in:
         # handle initial information flow- either will login or create a new account
         message = input("""
@@ -241,7 +242,7 @@ class ClientSocket:
           self.logged_in = False
           break
         
-        # if it is none of these key words, it will re query until you enter 'login' or 'create'
+        # if it is none of these key words, it will re query until you enter 'login' or 'create' or 'exit'
 
       # can only enter loop if you are logged in
       if self.logged_in:
@@ -297,18 +298,23 @@ class ClientSocket:
               data = self.client.recv(1024).decode()
 
               
-            # COMMENT: message from server was there because before it was client- server interaction
-            # now, we do not need to get the server to reprompt the client with something
-            # will we ever need 
+            # print output of the server- either that it was successfully sent or that the user was not found.
             print('Message from server: ' + data)
 
+          # get all messages that have been delivered to this client
           message = 'msgspls!'
+
+          # inform server that you want to get new messages
           self.client.sendto(message.encode(), (host, port))
+
+          # server will send back messages
           data = self.client.recv(1024).decode()
           if data != 'No messages available':
+            # deliver available messages if there are any
             available_msgs = data.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
 
+          # re query for new client actions
           message = input("""
           To send a message, enter the recipient username, 
           'listaccts' to list all active usernames, 
@@ -319,6 +325,7 @@ class ClientSocket:
         # will only exit while loops on 'exit' or 'delete'
         # read undelivered messages for exit
         if message.strip() == 'exit':
+          # retrieve messages before exiting
           get_remaining_msgs = 'msgspls!'
           self.client.sendto(get_remaining_msgs.encode(), (host, port))
           data = self.client.recv(1024).decode()
@@ -330,7 +337,8 @@ class ClientSocket:
         print(f'Connection closed.')
         self.client.close()
 
-
+# program creates a ClientSocket object and runs client_program which
+# handles input and directs it to the appropriate function
 if __name__ == '__main__':
   socket = ClientSocket()
   socket.client_program()
