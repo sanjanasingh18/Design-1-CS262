@@ -9,19 +9,15 @@ set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
 
-#account info is an object
-#recipients: queue of undelivered messages, logged in or not 
-#login TODO- if you login and you have undelivered messages, want to send those
-
-#this source code from https://docs.python.org/3/howto/sockets.html
-
 
 class ClientSocket:
 
   def __init__(self, client=None):
-    # we store if the client is currently logged in, their username, password, and 
-    # queue of messages that they want to receive
-    # all of these objects are stored in a dictionary on the server of username : ClientSocket object
+    # We store if the client is currently logged in (to see if they have permission to
+    # send/receive messages), their username, password, and 
+    # queue of messages that they have received.
+
+    # All of these objects are stored in a dictionary on the server of [username : ClientSocket object]
 
     self.logged_in = False
     self.username = ''
@@ -33,7 +29,7 @@ class ClientSocket:
     else:
       self.client = client
 
-  # basic get/set
+  # basic get/set functions to allow for the server to update these values
 
   def getStatus(self):
     return self.logged_in
@@ -60,35 +56,43 @@ class ClientSocket:
     self.messages.append(message_string)
 
 
-  # helper function to create an account
+  # Function to create a new account
   def create_client_username(self, message, host, port):
+    # message contains 'create'- send this to the server
+    # so the server runs the create function
+
     self.client.sendto(message.encode(), (host, port))
+
+    # server will send back a username (UUID)
     data = self.client.recv(1024).decode()
-    # update object attributes
+
+    # Update ClientSocket object username and log in fields
     self.username = data
     self.logged_in = True
     print('Your unique username is '  + data)
 
-    # add a password input
+    # Add a password input
     pwd_client = input('Enter password: ')
 
-    # update the password in the client side
+    # Update the password in the client side
     self.password = pwd_client
 
+    # Inform the server of the password
     self.client.sendto((pwd_client).encode(), (host, port))
 
+    # The server will confirm the password
     confirmation_from_server = self.client.recv(1024).decode()
     print(confirmation_from_server)
 
-
+  
+  # helper function to parse messages as everything is sent as strings
   def parse_live_message(self, message):
-    # message format is senderUUID_message
-    # UUID is 36 characters total
-    # you are not allowed to encode tuples; thus, use string format
+    # message format is senderUUID+message
+    # UUID is 36 characters total (fixed length)
     # return is of the format (sender UUID, message)
     return (message[:36], message[36:])
 
-      
+  # function to print all available messages
   def deliver_available_msgs(self, available_msgs):
     # want to receive all undelivered messages
     for received_msg in available_msgs:
@@ -97,21 +101,25 @@ class ClientSocket:
       print("Message from " + sender_username + ": " + msg)
 
 
-  # helper function to login to a client account
+  # Function to login to a client account
   def login_client_account(self, message, host, port):
 
     # ensure that the server knows that it is the login function
+    # message says 'login'
     self.client.sendto(message.encode(), (host, port))
 
+    # client will enter a username
     usrname_input = input("""
     Please enter your username to log in: 
     """)
+
     # send over the username to the server
     self.client.sendto(usrname_input.encode(), (host, port))
 
     # will receive back confirmation that username was sent successfully
     data = self.client.recv(1024).decode()
 
+    # client will enter a password
     pwd_input = input("""
     Please enter your password to log in: 
     """)
@@ -119,35 +127,42 @@ class ClientSocket:
     # in the loop, send the password to the server
     self.client.sendto(pwd_input.encode(), (host, port))
 
+    # server will send back feedback on whether this was a valid login or not
     data = self.client.recv(1024).decode()
 
+    # stay in for loop until you 
     while data[:30] != 'You have logged in. Thank you!':
       
-      # allow them to exit
+      # allow them to create an account, exit, or try to log in again
       message = input("""We were unable to find an account associated with that username and password combination.
       Please type either 'create' to create a new account,
       'exit' to close the server connection/log out, 
       or type 'login' to attempt to log in again.
       """)
+
       # exit- close the connection
       if message.lower().strip() == 'exit':
         print(f'Connection closed.')
         self.logged_in = False
         self.client.close()
         break
+
+      # create new account- reroute to that function
       elif message.lower().strip() == 'create':
         self.create_client_username(message, host, port)
         break
+
+
       else: 
         # requery the client to restart login process
         inform_status = 'login'
         self.client.sendto(inform_status.encode(), (host, port))
 
-        message = input("""
+        usrname_input = input("""
         Please enter your username to log in: 
         """)
         # send over the username to the server
-        self.client.sendto(message.encode(), (host, port))
+        self.client.sendto(usrname_input.encode(), (host, port))
 
         # will receive back confirmation that username was sent successfully
         data = self.client.recv(1024).decode()
@@ -159,19 +174,21 @@ class ClientSocket:
         # in the loop, send the password to the server
         self.client.sendto(pwd_input.encode(), (host, port))
 
+        # server will send back feedback on whether this was a valid login or not
         data = self.client.recv(1024).decode()
     
-    # can exit while loop on success (logged in) or on a break 
+    # can exit while loop on success (logged in) or if the loop breaks (with create/exit)
     if data[:30] == 'You have logged in. Thank you!':
+      # only if logged in, update the variables
       print("Successfully logged in.")
       self.logged_in = True
-      self.username = message
+      self.username = usrname_input
 
       if data[30:] != 'No messages available':
           available_msgs = data[30:].split('we_love_cs262')[1:]
           self.deliver_available_msgs(available_msgs)
 
-
+  # function to delete the client account
   def delete_client_account(self, message, host, port):
 
     # send a message that is 'delete' followed by the username to be parsed by the other side
