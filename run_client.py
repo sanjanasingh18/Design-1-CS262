@@ -103,11 +103,11 @@ class ClientSocket:
     # ensure that the server knows that it is the login function
     self.client.sendto(message.encode(), (host, port))
 
-    message = input("""
+    usrname_input = input("""
     Please enter your username to log in: 
     """)
     # send over the username to the server
-    self.client.sendto(message.encode(), (host, port))
+    self.client.sendto(usrname_input.encode(), (host, port))
 
     # will receive back confirmation that username was sent successfully
     data = self.client.recv(1024).decode()
@@ -139,17 +139,10 @@ class ClientSocket:
         self.create_client_username(message, host, port)
         break
       else: 
-        # requery the client to see if this was a successful username
-        # send over the username to the client
-        # prompt the server to look again for login
-        # the user will send over their username so we want to prompt the server
-        # to anticipate the login input folowed y 
-        inform_status = 'login' + message
+        # requery the client to restart login process
+        inform_status = 'login'
         self.client.sendto(inform_status.encode(), (host, port))
 
-        # this was prior.
-        # will receive back confrmation that you logged in successfully
-        # data = self.client.recv(1024).decode()
         message = input("""
         Please enter your username to log in: 
         """)
