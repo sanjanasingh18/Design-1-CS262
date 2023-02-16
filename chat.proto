@@ -16,10 +16,11 @@ service Bidirectional {
 }
 
 message Message {
-    string action = 1;
-    string client_username = 2;
-    string client_password = 3;
-    string recipient_username = 4;
-    string message = 5;
-    list available_messages = 6;
+    optional string action = 1;
+    optional string client_username = 2;
+    optional string client_password = 3;
+    optional string recipient_username = 4;
+    optional string message = 5;
+    optional list available_messages = 6;
+    optional list list_accounts = 7;
 }
