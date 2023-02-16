@@ -254,6 +254,7 @@ class Server:
             elif data.lower().strip()[:6] == 'delete':
                 # data parsing works correctly
                 # print(data, data.lower().strip(), data.lower().strip()[6:])
+                # client username, host, port, conn
                 self.delete_account(data.lower()[6:], host, port, conn)
                 return
 
@@ -261,6 +262,7 @@ class Server:
             elif data.lower().strip()[:7] == 'sendmsg':
                 # data parsing works correctly
                 # print(data, data.lower().strip()[7:43], data.lower()[44:])
+                # client username, recipient username, host, port, conn
                 self.deliver_message(data.lower().strip()[7:43], data.lower()[44:], host, port, conn)
 
 
