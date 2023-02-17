@@ -3,22 +3,16 @@ import socket
 import math
 import time
 import uuid
+import chat_pb2
 from google.protobuf.internal.encoder import _VarintEncoder
 from google.protobuf.internal.decoder import _DecodeVarint
-# from https://krpc.github.io/krpc/communication-protocols/tcpip.html
-import chat_pb2
 
-set_port = 8888
+# encode, decode from https://krpc.github.io/krpc/communication-protocols/tcpip.html
+
+set_port = 8885
 set_host = ''
-# host = 'dhcp-10-250-7-238.harvard.edu'
+# set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
-
-#account info is an object
-#recipients: queue of undelivered messages, logged in or not 
-#login TODO- if you login and you have undelivered messages, want to send those
-
-#this source code from https://docs.python.org/3/howto/sockets.html
-
 
 def encode_varint(value):
   """ Encode an int as a protobuf varint """
@@ -57,13 +51,14 @@ def recv_message(conn, msg_type):
     msg.ParseFromString(data)
     return msg
 
-
 class ClientSocket:
 
   def __init__(self, client=None):
-    # we store if the client is currently logged in, their username, password, and 
-    # queue of messages that they want to receive
-    # all of these objects are stored in sa dictionary on the server of username : ClientSocket object
+    # We store if the client is currently logged in (to see if they have permission to
+    # send/receive messages), their username, password, and 
+    # queue of messages that they have received.
+
+    # All of these objects are stored in a dictionary on the server of [username : ClientSocket object]
 
     self.logged_in = False
     self.username = ''
@@ -75,7 +70,7 @@ class ClientSocket:
     else:
       self.client = client
 
-  # basic get/set
+  # basic get/set functions to allow for the server to update these values
 
   def getStatus(self):
     return self.logged_in
@@ -102,7 +97,7 @@ class ClientSocket:
     self.messages.append(message_string)
 
 
- # helper function to create an account
+  # helper function to create an account
   def create_client_username(self, client_buf):
     client_buf.action = 'create'
     print('client_buf', client_buf)
@@ -133,15 +128,15 @@ class ClientSocket:
     #confirmation_from_server = self.client.recv(1024).decode()
     print(confirmation_from_server)
 
-
+  
+  # helper function to parse messages as everything is sent as strings
   def parse_live_message(self, message):
-    # message format is senderUUID_message
-    # UUID is 36 characters total
-    # you are not allowed to encode tuples; thus, use string format
+    # message format is senderUUID+message
+    # UUID is 36 characters total (fixed length)
     # return is of the format (sender UUID, message)
     return (message[:36], message[36:])
 
-      
+  # function to print all available messages
   def deliver_available_msgs(self, available_msgs):
     # want to receive all undelivered messages
     for received_msg in available_msgs:
@@ -176,7 +171,7 @@ class ClientSocket:
     # in the loop, send the password to the server
     send_message(self.client, client_buf)
 
-    data = recv_message(self.client, chat_pb2.Data)
+    data = recv_message(self.client, chat_pb2.Data).message
 
     while data[:30] != 'You have logged in. Thank you!':
       
@@ -250,7 +245,9 @@ class ClientSocket:
       #     self.deliver_available_msgs(available_msgs)
 
 
-  def delete_client_account(self, message, host, port):
+
+  # function to delete the client account
+  def delete_client_account(self, client_buf):
 
     # send a message that is 'delete' followed by the username to be parsed by the other side
     # we do not have a confirmation to delete as it takes effort to type 'delete' so it is difficult
@@ -258,12 +255,10 @@ class ClientSocket:
 
     client_buf.action = 'delete'
     client_buf.client_username = str(self.username)
-
-    # message = "delete" + str(self.username)
-    self.client.sendto(message.encode(), (host, port))
+    send_message(self.client, client_buf)
     
-    #server sends back status of whether it worked
-    data = self.client.recv(1024).decode()
+    # erver sends back status of whether account was successfully deleted
+    data = recv_message(self.client, chat_pb2.Data).message
     if data == 'Account successfully deleted.':
       self.logged_in = False
       print("Successfully deleted account.")
@@ -271,19 +266,20 @@ class ClientSocket:
       print("Unsuccessfully deleted account.")
 
 
+  # this is the main client program that we run- it calls on all subfunctions
   def client_program(self):
       host = set_host
       port = set_port
-
-      self.client.connect((host, port))
 
       # define a client_buf object to send messages
 
       client_buf = chat_pb2.Data()
 
+      self.client.connect((host, port))
+
       # handle initial information flow- either will login or create a new account
-      
-      # You need to either log in or create first
+      # You need to either log in or create an account first
+
       while not self.logged_in:
         # handle initial information flow- either will login or create a new account
         message = input("""
@@ -309,7 +305,7 @@ class ClientSocket:
           self.logged_in = False
           break
         
-        # if it is none of these key words, it will re query until you enter 'login' or 'create'
+        # if it is none of these key words, it will re query until you enter 'login' or 'create' or 'exit'
 
       # can only enter loop if you are logged in
       if self.logged_in:
@@ -327,22 +323,13 @@ class ClientSocket:
           # delete account function
           if message.lower().strip() == 'delete':
             # check remaining msgs
-            # TODO: update to use protocol buffer 
-            message = 'msgspls!'
-            self.client.sendto(message.encode(), (host, port))
-            data = self.client.recv(1024).decode()
-
-            client_msgs = client_buf.available_messages
-
-            if client_msgs != 'No messages available':
-                available_msgs = client_msgs.split('we_love_cs262')[1:]
-                self.deliver_available_msgs(available_msgs)
-
-            # if data != 'No messages available':
-            #   available_msgs = data.split('we_love_cs262')[1:]
-            #   self.deliver_available_msgs(available_msgs)
-
-            self.delete_client_account('delete', host, port)
+            client_buf.action = 'msgspls!'
+            send_message(self.client, client_buf)
+            data = recv_message(self.client, chat_pb2.Data).available_messages
+            if data != 'No messages available':
+              available_msgs = data.split('we_love_cs262')[1:]
+              self.deliver_available_msgs(available_msgs)
+            self.delete_client_account(client_buf)
             break
 
           # if they ask to create or delete given that you are currently logged in, throw an error
@@ -355,43 +342,44 @@ class ClientSocket:
 
           # list all account usernames
           elif message.lower().strip() == 'listaccts':
-            self.client.sendto(message.lower().strip().encode(), (host, port))
-            data = self.client.recv(1024).decode()
-            #feedback = self.client.recv(1024).decode()
+            client_buf.action = 'listaccts'
+            send_message(self.client, client_buf)            
+            data = recv_message(self.client, chat_pb2.Data).list_accounts
             print('Usernames: ' + data)
 
           # send message otherwise
           else:
-            self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
-            data = self.client.recv(1024).decode()
+            client_buf.action = 'sendmsg'
+            client_buf.client_username = self.getUsername()
+            client_buf.message = message
+            send_message(self.client, client_buf)
+            data = recv_message(self.client, chat_pb2.Data).message
 
             # if username is found, server will return 'User found. What is your message: '
             if data == "User found. Please enter your message: ":
               message = input(data)
+              client_buf.message = message
               self.client.sendto(message.encode(), (host, port))
               # receive confirmation from the server that it was delivered
-              data = self.client.recv(1024).decode()
+              data = recv_message(self.client, chat_pb2.Data).message
 
               
-            # COMMENT: message from server was there because before it was client- server interaction
-            # now, we do not need to get the server to reprompt the client with something
-            # will we ever need 
+            # print output of the server- either that it was successfully sent or that the user was not found.
             print('Message from server: ' + data)
 
-          # TODO: update to use buffers
-          message = 'msgspls!'
-          self.client.sendto(message.encode(), (host, port))
-          data = self.client.recv(1024).decode()
+          # inform server that you want to get new messages
+          client_buf.action = 'msgpls!'
+          send_message(self.client, client_buf)
 
-          client_msgs = client_buf.available_messages
+          # server will send back messages
+          # data = self.client.recv(1024).decode()
+          data = recv_message(self.client, chat_pb2.Data).available_messages
+          if data != 'No messages available':
+            # deliver available messages if there are any
+            available_msgs = data.split('we_love_cs262')[1:]
+            self.deliver_available_msgs(available_msgs)
 
-          if client_msgs != 'No messages available':
-              available_msgs = client_msgs.split('we_love_cs262')[1:]
-              self.deliver_available_msgs(available_msgs)
-          # if data != 'No messages available':
-          #   available_msgs = data.split('we_love_cs262')[1:]
-          #   self.deliver_available_msgs(available_msgs)
-
+          # re query for new client actions
           message = input("""
           To send a message, enter the recipient username, 
           'listaccts' to list all active usernames, 
@@ -402,26 +390,21 @@ class ClientSocket:
         # will only exit while loops on 'exit' or 'delete'
         # read undelivered messages for exit
         if message.strip() == 'exit':
-          # TODO: update to use buffers
-          get_remaining_msgs = 'msgspls!'
-          self.client.sendto(get_remaining_msgs.encode(), (host, port))
-          data = self.client.recv(1024).decode()
-
-          client_msgs = self.client_buf.available_messages
-
-          if client_msgs != 'No messages available':
-              available_msgs = client_msgs.split('we_love_cs262')[1:]
-              self.deliver_available_msgs(available_msgs)
-
-          # if data != 'No messages available':
-          #   available_msgs = data.split('we_love_cs262')[1:]
-          #   self.deliver_available_msgs(available_msgs)
+          # retrieve messages before exiting
+          # get_remaining_msgs = 'msgspls!'
+          client_buf.action = 'msgpls!'
+          send_message(self.client, client_buf)
+          data = recv_message(self.client, chat_pb2.Data).available_messages
+          if data != 'No messages available':
+            available_msgs = data.split('we_love_cs262')[1:]
+            self.deliver_available_msgs(available_msgs)
 
         self.logged_in = False
         print(f'Connection closed.')
         self.client.close()
 
-
+# program creates a ClientSocket object and runs client_program which
+# handles input and directs it to the appropriate function
 if __name__ == '__main__':
   socket = ClientSocket()
   socket.client_program()

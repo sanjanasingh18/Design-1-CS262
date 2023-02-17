@@ -245,19 +245,19 @@ class ClientSocket:
       #     self.deliver_available_msgs(available_msgs)
 
 
-
   # function to delete the client account
-  def delete_client_account(self, message, host, port):
+  def delete_client_account(self, client_buf):
 
     # send a message that is 'delete' followed by the username to be parsed by the other side
     # we do not have a confirmation to delete as it takes effort to type 'delete' so it is difficult
     # to happen by accident
 
-    message = "delete" + str(self.username)
-    self.client.sendto(message.encode(), (host, port))
+    client_buf.action = 'delete'
+    client_buf.client_username = str(self.username)
+    send_message(self.client, client_buf)
     
-    # erver sends back status of whether account was successfully deleted
-    data = self.client.recv(1024).decode()
+    # server sends back status of whether account was successfully deleted
+    data = recv_message(self.client, chat_pb2.Data).message
     if data == 'Account successfully deleted.':
       self.logged_in = False
       print("Successfully deleted account.")
@@ -323,13 +323,13 @@ class ClientSocket:
           # delete account function
           if message.lower().strip() == 'delete':
             # check remaining msgs
-            message = 'msgspls!'
-            self.client.sendto(message.encode(), (host, port))
-            data = self.client.recv(1024).decode()
-            if data != 'No messages available':
-              available_msgs = data.split('we_love_cs262')[1:]
-              self.deliver_available_msgs(available_msgs)
-            self.delete_client_account('delete', host, port)
+            # message = 'msgspls!'
+            # self.client.sendto(message.encode(), (host, port))
+            # data = self.client.recv(1024).decode()
+            # if data != 'No messages available':
+            #   available_msgs = data.split('we_love_cs262')[1:]
+            #   self.deliver_available_msgs(available_msgs)
+            self.delete_client_account(client_buf)
             break
 
           # if they ask to create or delete given that you are currently logged in, throw an error
