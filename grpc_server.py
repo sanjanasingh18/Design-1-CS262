@@ -190,7 +190,6 @@ class Server:
         # TODO- unlock mutex
         self.account_list_lock.release()
 
-        conn.sendto(final_msg.encode(), (host, port))
         client_buf.message = final_msg
         send_message(conn, client_buf)
 
