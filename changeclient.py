@@ -231,7 +231,7 @@ class ClientSocket:
     if data[:30] == 'You have logged in. Thank you!':
       print("Successfully logged in.")
       self.logged_in = True
-      # self.username = username_input
+      self.username = username_input
       client_buf.client_username = username_input
 
       client_msgs = client_buf.available_messages[30:]
@@ -318,7 +318,6 @@ class ClientSocket:
         
         # continue until client asks to exit
         while message.strip() != 'exit':
-          
 
           # delete account function
           if message.lower().strip() == 'delete':
@@ -326,9 +325,15 @@ class ClientSocket:
             # message = 'msgspls!'
             # self.client.sendto(message.encode(), (host, port))
             # data = self.client.recv(1024).decode()
-            # if data != 'No messages available':
-            #   available_msgs = data.split('we_love_cs262')[1:]
-            #   self.deliver_available_msgs(available_msgs)
+            client_buf.action = 'msgspls!'
+            client_buf.client_username = self.getUsername()
+            send_message(self.client, client_buf)
+            data = recv_message(self.client, chat_pb2.Data).available_messages
+
+            if data != 'No messages available':
+              available_msgs = data.split('we_love_cs262')[1:]
+              self.deliver_available_msgs(available_msgs)
+
             self.delete_client_account(client_buf)
             break
 
@@ -349,15 +354,22 @@ class ClientSocket:
             
           # send message otherwise
           else:
-            self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
-            data = self.client.recv(1024).decode()
+            client_buf.action = 'sendmsg'
+            client_buf.client_username = self.getUsername()
+            client_buf.message = message
+            send_message(self.client, client_buf)
+            data = recv_message(self.client, chat_pb2.Data).message
+
+            # self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
+            # data = self.client.recv(1024).decode()
 
             # if username is found, server will return 'User found. What is your message: '
             if data == "User found. Please enter your message: ":
               message = input(data)
-              self.client.sendto(message.encode(), (host, port))
+              client_buf.message = message
+              # self.client.sendto(message.encode(), (host, port))
               # receive confirmation from the server that it was delivered
-              data = self.client.recv(1024).decode()
+              data = recv_message(self.client, chat_pb2.Data).message
 
               
             # print output of the server- either that it was successfully sent or that the user was not found.
