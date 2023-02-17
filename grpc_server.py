@@ -123,7 +123,7 @@ class Server:
 
 
     # function we use to create an account/username for a new user
-    def create_username(self, client_buf, host, port, conn):
+    def create_username(self, client_buf, conn):
 
         # server will generate UUID, print UUID, send info to client, and then add it to the dict
         username = str(uuid.uuid4())
@@ -166,7 +166,6 @@ class Server:
         return username
 
     # send messages to the client that are in the deliver queue
-    def send_client_messages(self, client_username, host, port, conn, prefix=''):
         # want to receive all undelivered messages
         final_msg = prefix
 
@@ -192,60 +191,77 @@ class Server:
         self.account_list_lock.release()
 
         conn.sendto(final_msg.encode(), (host, port))
+        client_buf.message = final_msg
+        send_message(conn, client_buf)
+
+        #conn.sendto(final_msg.encode(), (host, port))
 
 
     # function to log in to an account
-    def login_account(self, host, port, conn):
-        username = conn.recv(1024).decode()
+    def login_account(self, client_buf, conn):
+        username = recv_message(conn, chat_pb2.Data).client_username
+        #username = conn.recv(1024).decode()
         confirm_received = "Confirming that the username has been received."
-        conn.sendto(confirm_received.encode(), (host, port))
+        
+        client_buf.message = confirm_received
 
-        password = conn.recv(1024).decode()
+        send_message(conn, client_buf)
+        #conn.sendto(confirm_received.encode(), (host, port))
+        
+        password = recv_message(conn, chat_pb2.Data).client_password
+        #password = conn.recv(1024).decode()
         # ask for login and password and then verify if it works
 
-        # TODO- lock mutex
+        # lock mutex
         self.account_list_lock.acquire()
         # TODOSS- figure out where to UNLOCK mutex
 
         if (username.strip() in self.account_list):
             # get the password corresponding to this
             if password == self.account_list.get(username.strip()).getPassword():
-                #TODO- unlock mutex
+                # unlock mutex
                 self.account_list_lock.release()
 
                 confirmation = 'You have logged in. Thank you!'
-                self.send_client_messages(username.strip(), host, port, conn, confirmation)
+
+                self.send_client_messages(username.strip(), client_buf, conn, confirmation)
                 return username.strip()
                 
             else:
-                #TODO- unlock mutex
+                # unlock mutex
                 self.account_list_lock.release()
                 print("Account not found.")
                 message = 'Error'
-                conn.sendto(message.encode(), (host, port))
+                client_buf.message = message
+                send_message(conn, client_buf)
+                #conn.sendto(message.encode(), (host, port))
 
         elif (username.strip()[5:] in self.account_list):
             # get the password corresponding to this
             if password == self.account_list.get(username.strip()[5:]).getPassword():
-                #TODO- unlock mutex
+                # unlock mutex
                 self.account_list_lock.release()
                 confirmation = 'You have logged in. Thank you!'
-                self.send_client_messages(username.strip(), host, port, conn, confirmation)
+                self.send_client_messages(username.strip(), client_buf, conn, confirmation)
                 return username.strip()[5:]
             else:
-                #TODO- unlock mutex
+                # unlock mutex
                 self.account_list_lock.release()
                 print("Account not found.")
                 message = 'Error'
-                conn.sendto(message.encode(), (host, port))
+                client_buf.message = message
+                send_message(conn, client_buf)
+                #conn.sendto(message.encode(), (host, port))
 
         else:
-            #TODO- unlock mutex
+            # unlock mutex
             self.account_list_lock.release()
             # want to prompt the client to either try again or create account
             print("Account not found.")
             message = 'Error'
-            conn.sendto(message.encode(), (host, port))
+            client_buf.message = message
+            send_message(conn, client_buf)
+            #conn.sendto(message.encode(), (host, port))
 
 
 
@@ -301,10 +317,10 @@ class Server:
 
             # check if data equals 'login'- take substring as we send login + username to server
             if data.lower().strip()[:5] == 'login':
-                curr_user = self.login_account(host, port, conn)
+                curr_user = self.login_account(client_buf, conn)
 
             elif data == 'create':
-                curr_user = self.create_username(client_buf, host, port, conn)
+                curr_user = self.create_username(client_buf, conn)
 
             # check if data equals 'delete'- take substring as we send  delete + username to server
             elif data.lower().strip()[:6] == 'delete':
