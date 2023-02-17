@@ -9,7 +9,7 @@ from google.protobuf.internal.decoder import _DecodeVarint
 
 # encode, decode from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 
-set_port = 8885
+set_port = 8887
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 
@@ -196,7 +196,8 @@ class Server:
             final_msg += "No messages available"
         # unlock mutex
         self.account_list_lock.release()
-
+        
+        # note that client_buf.message will have a confirmation that you have logged in as well
         client_buf.available_messages = final_msg
         send_message(conn, client_buf)
 
@@ -228,8 +229,8 @@ class Server:
                 self.account_list_lock.release()
 
                 confirmation = 'You have logged in. Thank you!'
-
-                self.send_client_messages(username.strip(), client_buf, conn, confirmation)
+                client_buf.message = confirmation
+                self.send_client_messages(username.strip(), client_buf, conn)
                 return username.strip()
                 
             else:
@@ -247,7 +248,8 @@ class Server:
                 # unlock mutex
                 self.account_list_lock.release()
                 confirmation = 'You have logged in. Thank you!'
-                self.send_client_messages(username.strip(), client_buf, conn, confirmation)
+                client_buf.message = confirmation
+                self.send_client_messages(username.strip(), client_buf, conn)
                 return username.strip()[5:]
             else:
                 # unlock mutex
@@ -272,6 +274,8 @@ class Server:
     def delete_account(self, username, client_buf, conn):
         # You can only delete your account once you are logged in so it handles
         # undelivered messages
+        print('acct list', self.account_list)
+        print('username', username)
         if username in self.account_list:
             # check if there are any messages in the queue to be delivered
             # if so, deliver them
@@ -330,6 +334,8 @@ class Server:
 
             # check if data equals 'delete'
             elif data.action == 'delete':
+                print('del', data)
+                print('data.cle', data.client_username)
                 self.delete_account(data.client_username, client_buf, conn)
                 return
 
@@ -344,7 +350,7 @@ class Server:
                 #conn.sendto(self.list_accounts().encode(), (host, port))
 
             elif data.action == "msgspls!":
-                self.send_client_messages(curr_user, host, port, conn)
+                self.send_client_messages(data.client_username, client_buf, conn)
                     
     def server_program(self):
         host = set_host
