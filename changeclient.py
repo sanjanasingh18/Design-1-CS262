@@ -378,6 +378,7 @@ class ClientSocket:
 
           # get all messages that have been delivered to this client
           client_buf.action = 'msgspls!'
+          client_buf.client_username = self.getUsername()
 
           # inform server that you want to get new messages
           send_message(self.client, client_buf)
