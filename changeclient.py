@@ -364,13 +364,13 @@ class ClientSocket:
             print('Message from server: ' + data)
 
           # get all messages that have been delivered to this client
-          message = 'msgspls!'
+          client_buf.action = 'sendmsg'
 
           # inform server that you want to get new messages
-          self.client.sendto(message.encode(), (host, port))
+          send_message(self.client, client_buf)
 
           # server will send back messages
-          data = self.client.recv(1024).decode()
+          data = recv_message(self.client, chat_pb2.Data).available_messages
           if data != 'No messages available':
             # deliver available messages if there are any
             available_msgs = data.split('we_love_cs262')[1:]
