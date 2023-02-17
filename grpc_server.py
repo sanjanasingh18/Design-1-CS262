@@ -197,7 +197,7 @@ class Server:
         # unlock mutex
         self.account_list_lock.release()
 
-        client_buf.message = final_msg
+        client_buf.available_messages = final_msg
         send_message(conn, client_buf)
 
         #conn.sendto(final_msg.encode(), (host, port))
@@ -276,7 +276,7 @@ class Server:
             # check if there are any messages in the queue to be delivered
             # if so, deliver them
             del self.account_list[username]
-            print("Successfully deleted client account", self.account_list)
+            print("Successfully deleted client account, remaining accounts: ", self.account_list)
             message = 'Account successfully deleted.'
             client_buf.message = message
             send_message(conn, client_buf)
@@ -318,7 +318,7 @@ class Server:
                 # close thread
                 return
 
-            print('Message from client: ' + data)
+            print('Message from client: ' + data.action)
 
             # check if data equals 'login'
             if data.action == 'login':
@@ -339,7 +339,7 @@ class Server:
 
             # check if client request is to list all accounts
             elif data.action == 'listaccts':
-                client_buf.message = self.list_accounts()
+                client_buf.list_accounts = self.list_accounts()
                 send_message(conn, client_buf)
                 #conn.sendto(self.list_accounts().encode(), (host, port))
 
