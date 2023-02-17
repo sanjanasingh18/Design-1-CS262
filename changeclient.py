@@ -9,7 +9,7 @@ from google.protobuf.internal.decoder import _DecodeVarint
 
 # encode, decode from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 
-set_port = 8885
+set_port = 8887
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]

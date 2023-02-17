@@ -334,8 +334,6 @@ class Server:
 
             # check if data equals 'delete'
             elif data.action == 'delete':
-                print('del', data)
-                print('data.cle', data.client_username)
                 self.delete_account(data.client_username, client_buf, conn)
                 return
 

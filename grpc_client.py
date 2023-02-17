@@ -9,7 +9,7 @@ from google.protobuf.internal.decoder import _DecodeVarint
 
 # encode, decode from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 
-set_port = 8885
+set_port = 8887
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
@@ -231,7 +231,7 @@ class ClientSocket:
     if data[:30] == 'You have logged in. Thank you!':
       print("Successfully logged in.")
       self.logged_in = True
-      # self.username = username_input
+      self.username = username_input
       client_buf.client_username = username_input
 
       client_msgs = client_buf.available_messages[30:]
@@ -245,7 +245,6 @@ class ClientSocket:
       #     self.deliver_available_msgs(available_msgs)
 
 
-
   # function to delete the client account
   def delete_client_account(self, client_buf):
 
@@ -257,7 +256,7 @@ class ClientSocket:
     client_buf.client_username = str(self.username)
     send_message(self.client, client_buf)
     
-    # erver sends back status of whether account was successfully deleted
+    # server sends back status of whether account was successfully deleted
     data = recv_message(self.client, chat_pb2.Data).message
     if data == 'Account successfully deleted.':
       self.logged_in = False
@@ -319,16 +318,22 @@ class ClientSocket:
         
         # continue until client asks to exit
         while message.strip() != 'exit':
-          
+
           # delete account function
           if message.lower().strip() == 'delete':
             # check remaining msgs
+            # message = 'msgspls!'
+            # self.client.sendto(message.encode(), (host, port))
+            # data = self.client.recv(1024).decode()
             client_buf.action = 'msgspls!'
+            client_buf.client_username = self.getUsername()
             send_message(self.client, client_buf)
             data = recv_message(self.client, chat_pb2.Data).available_messages
+
             if data != 'No messages available':
               available_msgs = data.split('we_love_cs262')[1:]
               self.deliver_available_msgs(available_msgs)
+
             self.delete_client_account(client_buf)
             break
 
@@ -346,20 +351,24 @@ class ClientSocket:
             send_message(self.client, client_buf)            
             data = recv_message(self.client, chat_pb2.Data).list_accounts
             print('Usernames: ' + data)
-
+            
           # send message otherwise
           else:
             client_buf.action = 'sendmsg'
             client_buf.client_username = self.getUsername()
-            client_buf.message = message
+            client_buf.recipient_username = message
             send_message(self.client, client_buf)
             data = recv_message(self.client, chat_pb2.Data).message
+
+            # self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
+            # data = self.client.recv(1024).decode()
 
             # if username is found, server will return 'User found. What is your message: '
             if data == "User found. Please enter your message: ":
               message = input(data)
               client_buf.message = message
-              self.client.sendto(message.encode(), (host, port))
+              send_message(self.client, client_buf)
+              # self.client.sendto(message.encode(), (host, port))
               # receive confirmation from the server that it was delivered
               data = recv_message(self.client, chat_pb2.Data).message
 
@@ -367,12 +376,14 @@ class ClientSocket:
             # print output of the server- either that it was successfully sent or that the user was not found.
             print('Message from server: ' + data)
 
+          # get all messages that have been delivered to this client
+          client_buf.action = 'msgspls!'
+          client_buf.client_username = self.getUsername()
+
           # inform server that you want to get new messages
-          client_buf.action = 'msgpls!'
           send_message(self.client, client_buf)
 
           # server will send back messages
-          # data = self.client.recv(1024).decode()
           data = recv_message(self.client, chat_pb2.Data).available_messages
           if data != 'No messages available':
             # deliver available messages if there are any
@@ -391,10 +402,12 @@ class ClientSocket:
         # read undelivered messages for exit
         if message.strip() == 'exit':
           # retrieve messages before exiting
-          # get_remaining_msgs = 'msgspls!'
-          client_buf.action = 'msgpls!'
+          client_buf.action = 'msgspls!'
           send_message(self.client, client_buf)
           data = recv_message(self.client, chat_pb2.Data).available_messages
+          # get_remaining_msgs = 'msgspls!'
+          # self.client.sendto(get_remaining_msgs.encode(), (host, port))
+          # data = self.client.recv(1024).decode()
           if data != 'No messages available':
             available_msgs = data.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
