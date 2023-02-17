@@ -3,6 +3,9 @@ import socket
 import math
 import time
 import uuid
+from google.protobuf.internal.encoder import _VarintEncoder
+from google.protobuf.internal.decoder import _DecodeVarint
+# from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 import chat_pb2
 
 set_port = 8888
@@ -15,6 +18,44 @@ set_host = ''
 #login TODO- if you login and you have undelivered messages, want to send those
 
 #this source code from https://docs.python.org/3/howto/sockets.html
+
+
+def encode_varint(value):
+  """ Encode an int as a protobuf varint """
+  data = []
+  _VarintEncoder()(data.append, value, False)
+  return b''.join(data)
+
+
+def decode_varint(data):
+    """ Decode a protobuf varint to an int """
+    return _DecodeVarint(data, 0)[0]
+
+
+def send_message(conn, msg):
+    """ Send a message, prefixed with its size, to a TPC/IP socket """
+    data = msg.SerializeToString()
+    size = encode_varint(len(data))
+    conn.sendall(size + data)
+
+
+def recv_message(conn, msg_type):
+    """ Receive a message, prefixed with its size, from a TCP/IP socket """
+    # Receive the size of the message data
+    data = b''
+    while True:
+        try:
+            data += conn.recv(1)
+            size = decode_varint(data)
+            break
+        except IndexError:
+            pass
+    # Receive the message data
+    data = conn.recv(size)
+    # Decode the message
+    msg = msg_type()
+    msg.ParseFromString(data)
+    return msg
 
 
 class ClientSocket:
@@ -97,7 +138,6 @@ class ClientSocket:
 
       
   def deliver_available_msgs(self, available_msgs):
-    # TODO: get available messages from the protobuffer
     # want to receive all undelivered messages
     for received_msg in available_msgs:
       # get Messages() has 
@@ -194,10 +234,15 @@ class ClientSocket:
       # self.username = username_input
       self.client_buf.username = username_input
 
-      # TODO: update to use buffers
-      if data[30:] != 'No messages available':
-          available_msgs = data[30:].split('we_love_cs262')[1:]
+      client_msgs = self.client_buf.available_messages[30:]
+
+      if client_msgs != 'No messages available':
+          available_msgs = client_msgs.split('we_love_cs262')[1:]
           self.deliver_available_msgs(available_msgs)
+
+      # if data[30:] != 'No messages available':
+      #     available_msgs = data[30:].split('we_love_cs262')[1:]
+      #     self.deliver_available_msgs(available_msgs)
 
 
   def delete_client_account(self, message, host, port):
@@ -277,9 +322,17 @@ class ClientSocket:
             message = 'msgspls!'
             self.client.sendto(message.encode(), (host, port))
             data = self.client.recv(1024).decode()
-            if data != 'No messages available':
-              available_msgs = data.split('we_love_cs262')[1:]
-              self.deliver_available_msgs(available_msgs)
+
+            client_msgs = self.client_buf.available_messages
+
+            if client_msgs != 'No messages available':
+                available_msgs = client_msgs.split('we_love_cs262')[1:]
+                self.deliver_available_msgs(available_msgs)
+
+            # if data != 'No messages available':
+            #   available_msgs = data.split('we_love_cs262')[1:]
+            #   self.deliver_available_msgs(available_msgs)
+
             self.delete_client_account('delete', host, port)
             break
 
@@ -320,9 +373,15 @@ class ClientSocket:
           message = 'msgspls!'
           self.client.sendto(message.encode(), (host, port))
           data = self.client.recv(1024).decode()
-          if data != 'No messages available':
-            available_msgs = data.split('we_love_cs262')[1:]
-            self.deliver_available_msgs(available_msgs)
+
+          client_msgs = self.client_buf.available_messages
+
+          if client_msgs != 'No messages available':
+              available_msgs = client_msgs.split('we_love_cs262')[1:]
+              self.deliver_available_msgs(available_msgs)
+          # if data != 'No messages available':
+          #   available_msgs = data.split('we_love_cs262')[1:]
+          #   self.deliver_available_msgs(available_msgs)
 
           message = input("""
           To send a message, enter the recipient username, 
@@ -338,9 +397,16 @@ class ClientSocket:
           get_remaining_msgs = 'msgspls!'
           self.client.sendto(get_remaining_msgs.encode(), (host, port))
           data = self.client.recv(1024).decode()
-          if data != 'No messages available':
-            available_msgs = data.split('we_love_cs262')[1:]
-            self.deliver_available_msgs(available_msgs)
+
+          client_msgs = self.client_buf.available_messages
+
+          if client_msgs != 'No messages available':
+              available_msgs = client_msgs.split('we_love_cs262')[1:]
+              self.deliver_available_msgs(available_msgs)
+
+          # if data != 'No messages available':
+          #   available_msgs = data.split('we_love_cs262')[1:]
+          #   self.deliver_available_msgs(available_msgs)
 
         self.logged_in = False
         print(f'Connection closed.')
