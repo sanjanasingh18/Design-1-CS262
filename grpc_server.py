@@ -9,7 +9,7 @@ from google.protobuf.internal.decoder import _DecodeVarint
 
 # encode, decode from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 
-set_port = 8887
+set_port = 8885
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 
@@ -128,10 +128,11 @@ class Server:
         # server will generate UUID, print UUID, send info to client, and then add it to the dict
         username = str(uuid.uuid4())
         print("Unique username generated for client is "+ username + ".")
-        client_buf.username = username
+        client_buf.client_username = username
+        print(client_buf, 'client_buf')
 
         send_message(conn, client_buf)
-        #send_message(self.server, client_buf)
+        # send_message(self.server, client_buf)
         #conn.sendto(username.encode(), (host, port))
 
         # add (username: clientSocket object where clientSocket includes log-in status,
@@ -145,17 +146,17 @@ class Server:
         self.account_list_lock.release()
 
         # client will send back a password + send over confirmation
-        data = recv_message(self.server, chat_pb2.Data())
+        pwd = recv_message(conn, chat_pb2.Data).client_password
         #data = conn.recv(1024).decode()
         # update the password in the object that is being stored in the dictionary
 
         # TODO- lock mutex
         self.account_list_lock.acquire()
-        self.account_list.get(username.strip()).setPassword(data)
+        self.account_list.get(username.strip()).setPassword(pwd)
         # TODO- unlock mutex
         self.account_list_lock.release()
 
-        message = "Your password is confirmed to be " + data
+        message = "Your password is confirmed to be " + pwd
         client_buf.message = message
         send_message(conn, client_buf)
         #send_message(self.server, client_buf)
@@ -284,8 +285,12 @@ class Server:
 
         while True:
             # receive from client
-            data = recv_message(self.server, chat_pb2.Data()).action
+            data = recv_message(conn, chat_pb2.Data)
+            print('uhhh', data)
+            data = data.action
+            print('um', data)
             #data = conn.recv(1024).decode()
+
             
             # check if connection closed- if so, close thread
             if not data:

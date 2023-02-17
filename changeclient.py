@@ -9,7 +9,7 @@ from google.protobuf.internal.decoder import _DecodeVarint
 
 # encode, decode from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 
-set_port = 8887
+set_port = 8885
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
@@ -100,29 +100,31 @@ class ClientSocket:
   # helper function to create an account
   def create_client_username(self, client_buf, host, port):
     client_buf.action = 'create'
+    print('client_buf', client_buf)
+
     send_message(self.client, client_buf)
     #self.client.sendto(message.encode(), (host, port))
 
-    data = recv_message(self.client, chat_pb2.Data())
+    data = recv_message(self.client, chat_pb2.Data)
     #data = self.client.recv(1024).decode()
     # update object attributes
-    self.username = data.username
-    client_buf.username = data.username
+    self.username = data.client_username
+    client_buf.client_username = data.client_username
     # self.username = data
     self.logged_in = True
-    print('Your unique username is '  + data.username)
+    print('Your unique username is '  + data.client_username)
 
     # add a password input
     pwd_client = input('Enter password: ')
 
     # update the password in the client side
-    client_buf.password = pwd_client
+    client_buf.client_password = pwd_client
     self.password = pwd_client
 
     send_message(self.client, client_buf)
     #self.client.sendto((pwd_client).encode(), (host, port))
 
-    confirmation_from_server = recv_message(self.client, chat_pb2.Data()).message
+    confirmation_from_server = recv_message(self.client, chat_pb2.Data).message
     #confirmation_from_server = self.client.recv(1024).decode()
     print(confirmation_from_server)
 
@@ -279,7 +281,7 @@ class ClientSocket:
 
         # create function
         elif message.lower().strip() == 'create':
-          self.create_client_username(client_buf, conn, host, port)
+          self.create_client_username(client_buf, host, port)
       
         # exit function- may want to exit early
         elif message.lower().strip() == 'exit':
