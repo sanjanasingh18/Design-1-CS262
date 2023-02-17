@@ -70,8 +70,6 @@ class ClientSocket:
     self.password = ''
     self.messages = []
 
-    self.client_buf = chat_pb2.Data()
-
     if client is None:
       self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     else:
@@ -104,28 +102,35 @@ class ClientSocket:
     self.messages.append(message_string)
 
 
-  # helper function to create an account
-  def create_client_username(self, message, host, port):
-    self.client_buf.action = 'create'
+ # helper function to create an account
+  def create_client_username(self, client_buf):
+    client_buf.action = 'create'
+    print('client_buf', client_buf)
 
-    self.client.sendto(message.encode(), (host, port))
-    data = self.client.recv(1024).decode()
+    send_message(self.client, client_buf)
+    #self.client.sendto(message.encode(), (host, port))
+
+    data = recv_message(self.client, chat_pb2.Data)
+    #data = self.client.recv(1024).decode()
     # update object attributes
-    self.client_buf.username = data
+    self.username = data.client_username
+    client_buf.client_username = data.client_username
     # self.username = data
     self.logged_in = True
-    print('Your unique username is '  + data)
+    print('Your unique username is '  + data.client_username)
 
     # add a password input
     pwd_client = input('Enter password: ')
 
     # update the password in the client side
-    self.client_buf.password = pwd_client
-    # self.password = pwd_client
+    client_buf.client_password = pwd_client
+    self.password = pwd_client
 
-    self.client.sendto((pwd_client).encode(), (host, port))
+    send_message(self.client, client_buf)
+    #self.client.sendto((pwd_client).encode(), (host, port))
 
-    confirmation_from_server = self.client.recv(1024).decode()
+    confirmation_from_server = recv_message(self.client, chat_pb2.Data).message
+    #confirmation_from_server = self.client.recv(1024).decode()
     print(confirmation_from_server)
 
 
@@ -146,32 +151,32 @@ class ClientSocket:
 
 
   # helper function to login to a client account
-  def login_client_account(self, message, host, port):
+  def login_client_account(self, client_buf):
 
-    self.client_buf.action = 'login'
+    client_buf.action = 'login'
 
     # ensure that the server knows that it is the login function
-    self.client.sendto(message.encode(), (host, port))
+    send_message(self.client, client_buf)
 
     username_input = input("""
     Please enter your username to log in: 
     """)
-    self.client_buf.username = username_input
+    client_buf.client_username = username_input
     # send over the username to the server
-    self.client.sendto(username_input.encode(), (host, port))
+    send_message(self.client, client_buf)
 
     # will receive back confirmation that username was sent successfully
-    data = self.client.recv(1024).decode()
+    data = recv_message(self.client, chat_pb2.Data)
 
     pwd_input = input("""
     Please enter your password to log in: 
     """)
-    self.client_buf.password = pwd_input
+    client_buf.client_password = pwd_input
 
     # in the loop, send the password to the server
-    self.client.sendto(pwd_input.encode(), (host, port))
+    send_message(self.client, client_buf)
 
-    data = self.client.recv(1024).decode()
+    data = recv_message(self.client, chat_pb2.Data)
 
     while data[:30] != 'You have logged in. Thank you!':
       
@@ -189,7 +194,7 @@ class ClientSocket:
         break
 
       elif message.lower().strip() == 'create':
-        self.create_client_username(message, host, port)
+        self.create_client_username(client_buf)
         break
 
       else: 
@@ -198,8 +203,8 @@ class ClientSocket:
         # prompt the server to look again for login
         # the user will send over their username so we want to prompt the server
         # to anticipate the login input folowed y 
-        inform_status = 'login'
-        self.client.sendto(inform_status.encode(), (host, port))
+        client_buf.action = 'login'
+        send_message(self.client, client_buf)
 
         # this was prior.
         # will receive back confrmation that you logged in successfully
@@ -208,33 +213,33 @@ class ClientSocket:
         Please enter your username to log in: 
         """)
 
-        self.client_buf.username = username_input
+        client_buf.client_username = username_input
 
         # send over the username to the server
-        self.client.sendto(username_input.encode(), (host, port))
+        send_message(self.client, client_buf)
 
         # will receive back confirmation that username was sent successfully
-        data = self.client.recv(1024).decode()
+        data = recv_message(self.client, chat_pb2.Data)
 
         pwd_input = input("""
         Please enter your password to log in: 
         """)
         
-        self.client_buf.password = pwd_input
+        client_buf.client_password = pwd_input
 
         # in the loop, send the password to the server
-        self.client.sendto(pwd_input.encode(), (host, port))
+        send_message(self.client, client_buf)
 
-        data = self.client.recv(1024).decode()
+        data = recv_message(self.client, chat_pb2.Data)
     
     # can exit while loop on success (logged in) or on a break 
     if data[:30] == 'You have logged in. Thank you!':
       print("Successfully logged in.")
       self.logged_in = True
       # self.username = username_input
-      self.client_buf.username = username_input
+      client_buf.client_username = username_input
 
-      client_msgs = self.client_buf.available_messages[30:]
+      client_msgs = client_buf.available_messages[30:]
 
       if client_msgs != 'No messages available':
           available_msgs = client_msgs.split('we_love_cs262')[1:]
@@ -251,8 +256,8 @@ class ClientSocket:
     # we do not have a confirmation to delete as it takes effort to type 'delete' so it is difficult
     # to happen by accident
 
-    self.client_buf.action = 'delete'
-    self.client_buf.username = str(self.username)
+    client_buf.action = 'delete'
+    client_buf.client_username = str(self.username)
 
     # message = "delete" + str(self.username)
     self.client.sendto(message.encode(), (host, port))
@@ -272,6 +277,10 @@ class ClientSocket:
 
       self.client.connect((host, port))
 
+      # define a client_buf object to send messages
+
+      client_buf = chat_pb2.Data()
+
       # handle initial information flow- either will login or create a new account
       
       # You need to either log in or create first
@@ -286,12 +295,12 @@ class ClientSocket:
 
         # login function
         if message.lower().strip()[:5] == 'login':
-          self.login_client_account(message, host, port)
+          self.login_client_account(client_buf)
           break
 
         # create function
         elif message.lower().strip() == 'create':
-          self.create_client_username(message, host, port)
+          self.create_client_username(client_buf)
       
         # exit function- may want to exit early
         elif message.lower().strip() == 'exit':
@@ -323,7 +332,7 @@ class ClientSocket:
             self.client.sendto(message.encode(), (host, port))
             data = self.client.recv(1024).decode()
 
-            client_msgs = self.client_buf.available_messages
+            client_msgs = client_buf.available_messages
 
             if client_msgs != 'No messages available':
                 available_msgs = client_msgs.split('we_love_cs262')[1:]
@@ -374,7 +383,7 @@ class ClientSocket:
           self.client.sendto(message.encode(), (host, port))
           data = self.client.recv(1024).decode()
 
-          client_msgs = self.client_buf.available_messages
+          client_msgs = client_buf.available_messages
 
           if client_msgs != 'No messages available':
               available_msgs = client_msgs.split('we_love_cs262')[1:]
