@@ -3,12 +3,55 @@ import uuid
 from _thread import *
 import threading
 from run_client import ClientSocket
+import chat_pb2
+from google.protobuf.internal.encoder import _VarintEncoder
+from google.protobuf.internal.decoder import _DecodeVarint
 
-set_port = 8888
+# encode, decode from https://krpc.github.io/krpc/communication-protocols/tcpip.html
+
+set_port = 8887
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 
 #this source code from https://docs.python.org/3/howto/sockets.html
+
+
+def encode_varint(value):
+  """ Encode an int as a protobuf varint """
+  data = []
+  _VarintEncoder()(data.append, value, False)
+  return b''.join(data)
+
+
+def decode_varint(data):
+    """ Decode a protobuf varint to an int """
+    return _DecodeVarint(data, 0)[0]
+
+
+def send_message(conn, msg):
+    """ Send a message, prefixed with its size, to a TPC/IP socket """
+    data = msg.SerializeToString()
+    size = encode_varint(len(data))
+    conn.sendall(size + data)
+
+
+def recv_message(conn, msg_type):
+    """ Receive a message, prefixed with its size, from a TCP/IP socket """
+    # Receive the size of the message data
+    data = b''
+    while True:
+        try:
+            data += conn.recv(1)
+            size = decode_varint(data)
+            break
+        except IndexError:
+            pass
+    # Receive the message data
+    data = conn.recv(size)
+    # Decode the message
+    msg = msg_type()
+    msg.ParseFromString(data)
+    return msg
 
 class Server:
     curr_user = ''
@@ -80,14 +123,16 @@ class Server:
 
 
     # function we use to create an account/username for a new user
-    def create_username(self, host, port, conn):
-
-        # HI- SS I went in here and cleaned up this code bc its horrible 
+    def create_username(self, client_buf, host, port, conn):
 
         # server will generate UUID, print UUID, send info to client, and then add it to the dict
         username = str(uuid.uuid4())
         print("Unique username generated for client is "+ username + ".")
-        conn.sendto(username.encode(), (host, port))
+        client_buf.username = username
+
+        send_message(conn, client_buf)
+        #send_message(self.server, client_buf)
+        #conn.sendto(username.encode(), (host, port))
 
         # add (username: clientSocket object where clientSocket includes log-in status,
         # username, password, and queue of undelivered messages
@@ -100,7 +145,8 @@ class Server:
         self.account_list_lock.release()
 
         # client will send back a password + send over confirmation
-        data = conn.recv(1024).decode()
+        data = recv_message(self.server, chat_pb2.Data())
+        #data = conn.recv(1024).decode()
         # update the password in the object that is being stored in the dictionary
 
         # TODO- lock mutex
@@ -110,7 +156,11 @@ class Server:
         self.account_list_lock.release()
 
         message = "Your password is confirmed to be " + data
-        conn.sendto(message.encode(), (host, port))
+        client_buf.message = message
+        send_message(conn, client_buf)
+        #send_message(self.server, client_buf)
+
+        #conn.sendto(message.encode(), (host, port))
         
         return username
 
@@ -229,9 +279,13 @@ class Server:
 
     def server_to_client(self, host, conn, port):
         curr_user = ''
+
+        client_buf = chat_pb2.Data()
+
         while True:
             # receive from client
-            data = conn.recv(1024).decode()
+            data = recv_message(self.server, chat_pb2.Data()).action
+            #data = conn.recv(1024).decode()
             
             # check if connection closed- if so, close thread
             if not data:
@@ -244,8 +298,8 @@ class Server:
             if data.lower().strip()[:5] == 'login':
                 curr_user = self.login_account(host, port, conn)
 
-            elif data.lower().strip()[:6] == 'create':
-                curr_user = self.create_username(host, port, conn)
+            elif data == 'create':
+                curr_user = self.create_username(client_buf, host, port, conn)
 
             # check if data equals 'delete'- take substring as we send  delete + username to server
             elif data.lower().strip()[:6] == 'delete':

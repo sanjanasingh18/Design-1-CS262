@@ -3,11 +3,13 @@ import socket
 import math
 import time
 import uuid
+import chat_pb2
 from google.protobuf.internal.encoder import _VarintEncoder
 from google.protobuf.internal.decoder import _DecodeVarint
-# from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 
-set_port = 8888
+# encode, decode from https://krpc.github.io/krpc/communication-protocols/tcpip.html
+
+set_port = 8887
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
@@ -96,27 +98,32 @@ class ClientSocket:
 
 
   # helper function to create an account
-  def create_client_username(self, message, host, port):
-    self.client_buf.action = 'create'
+  def create_client_username(self, client_buf, host, port):
+    client_buf.action = 'create'
+    send_message(self.client, client_buf)
+    #self.client.sendto(message.encode(), (host, port))
 
-    self.client.sendto(message.encode(), (host, port))
-    data = self.client.recv(1024).decode()
+    data = recv_message(self.client, chat_pb2.Data())
+    #data = self.client.recv(1024).decode()
     # update object attributes
-    self.client_buf.username = data
+    self.username = data.username
+    client_buf.username = data.username
     # self.username = data
     self.logged_in = True
-    print('Your unique username is '  + data)
+    print('Your unique username is '  + data.username)
 
     # add a password input
     pwd_client = input('Enter password: ')
 
     # update the password in the client side
-    self.client_buf.password = pwd_client
-    # self.password = pwd_client
+    client_buf.password = pwd_client
+    self.password = pwd_client
 
-    self.client.sendto((pwd_client).encode(), (host, port))
+    send_message(self.client, client_buf)
+    #self.client.sendto((pwd_client).encode(), (host, port))
 
-    confirmation_from_server = self.client.recv(1024).decode()
+    confirmation_from_server = recv_message(self.client, chat_pb2.Data()).message
+    #confirmation_from_server = self.client.recv(1024).decode()
     print(confirmation_from_server)
 
   
@@ -247,6 +254,10 @@ class ClientSocket:
       host = set_host
       port = set_port
 
+      # define a client_buf object to send messages
+
+      client_buf = chat_pb2.Data()
+
       self.client.connect((host, port))
 
       # handle initial information flow- either will login or create a new account
@@ -268,7 +279,7 @@ class ClientSocket:
 
         # create function
         elif message.lower().strip() == 'create':
-          self.create_client_username(message, host, port)
+          self.create_client_username(client_buf, conn, host, port)
       
         # exit function- may want to exit early
         elif message.lower().strip() == 'exit':
