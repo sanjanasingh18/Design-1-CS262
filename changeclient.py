@@ -364,7 +364,7 @@ class ClientSocket:
             print('Message from server: ' + data)
 
           # get all messages that have been delivered to this client
-          client_buf.action = 'sendmsg'
+          client_buf.action = 'msgspls!'
 
           # inform server that you want to get new messages
           send_message(self.client, client_buf)
@@ -388,9 +388,12 @@ class ClientSocket:
         # read undelivered messages for exit
         if message.strip() == 'exit':
           # retrieve messages before exiting
-          get_remaining_msgs = 'msgspls!'
-          self.client.sendto(get_remaining_msgs.encode(), (host, port))
-          data = self.client.recv(1024).decode()
+          client_buf.action = 'msgspls!'
+          send_message(self.client, client_buf)
+          data = recv_message(self.client, chat_pb2.Data).available_messages
+          # get_remaining_msgs = 'msgspls!'
+          # self.client.sendto(get_remaining_msgs.encode(), (host, port))
+          # data = self.client.recv(1024).decode()
           if data != 'No messages available':
             available_msgs = data.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
