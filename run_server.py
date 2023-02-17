@@ -217,7 +217,7 @@ class Server:
         if username in self.account_list:
             # delete account and send confirmation
             del self.account_list[username]
-            print("Successfully deleted client account", self.account_list)
+            print("Successfully deleted client account, remaining accounts: ", self.account_list)
             message = 'Account successfully deleted.'
             conn.sendto(message.encode(), (host, port))
         else:
