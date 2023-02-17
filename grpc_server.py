@@ -166,6 +166,7 @@ class Server:
         return username
 
     # send messages to the client that are in the deliver queue
+    def send_client_messages(self, client_username, client_buf, conn, prefix=''):
         # want to receive all undelivered messages
         final_msg = prefix
 

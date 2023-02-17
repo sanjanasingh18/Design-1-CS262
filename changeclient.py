@@ -98,7 +98,7 @@ class ClientSocket:
 
 
   # helper function to create an account
-  def create_client_username(self, client_buf, host, port):
+  def create_client_username(self, client_buf):
     client_buf.action = 'create'
     print('client_buf', client_buf)
 
@@ -171,7 +171,7 @@ class ClientSocket:
     # in the loop, send the password to the server
     send_message(self.client, client_buf)
 
-    data = recv_message(self.client, chat_pb2.Data)
+    data = recv_message(self.client, chat_pb2.Data).message
 
     while data[:30] != 'You have logged in. Thank you!':
       
@@ -295,7 +295,7 @@ class ClientSocket:
 
         # create function
         elif message.lower().strip() == 'create':
-          self.create_client_username(client_buf, host, port)
+          self.create_client_username(client_buf)
       
         # exit function- may want to exit early
         elif message.lower().strip() == 'exit':
