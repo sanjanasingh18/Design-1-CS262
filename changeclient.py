@@ -342,11 +342,11 @@ class ClientSocket:
 
           # list all account usernames
           elif message.lower().strip() == 'listaccts':
-            self.client.sendto(message.lower().strip().encode(), (host, port))
-            data = self.client.recv(1024).decode()
-            #feedback = self.client.recv(1024).decode()
+            client_buf.action = 'listaccts'
+            send_message(self.client, client_buf)            
+            data = recv_message(self.client, chat_pb2.Data).list_accounts
             print('Usernames: ' + data)
-
+            
           # send message otherwise
           else:
             self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
