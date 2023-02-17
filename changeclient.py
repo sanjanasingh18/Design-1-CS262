@@ -145,45 +145,42 @@ class ClientSocket:
       print("Message from " + sender_username + ": " + msg)
 
 
-  # Function to login to a client account
-  def login_client_account(self, message, host, port):
+  # helper function to login to a client account
+  def login_client_account(self, client_buf):
+
+    client_buf.action = 'login'
 
     # ensure that the server knows that it is the login function
-    # message says 'login'
-    self.client.sendto(message.encode(), (host, port))
+    send_message(self.client, client_buf)
 
-    # client will enter a username
-    usrname_input = input("""
+    username_input = input("""
     Please enter your username to log in: 
     """)
-
+    client_buf.client_username = username_input
     # send over the username to the server
-    self.client.sendto(usrname_input.encode(), (host, port))
+    send_message(self.client, client_buf)
 
     # will receive back confirmation that username was sent successfully
-    data = self.client.recv(1024).decode()
+    data = recv_message(self.client, chat_pb2.Data)
 
-    # client will enter a password
     pwd_input = input("""
     Please enter your password to log in: 
     """)
+    client_buf.client_password = pwd_input
 
     # in the loop, send the password to the server
-    self.client.sendto(pwd_input.encode(), (host, port))
+    send_message(self.client, client_buf)
 
-    # server will send back feedback on whether this was a valid login or not
-    data = self.client.recv(1024).decode()
+    data = recv_message(self.client, chat_pb2.Data)
 
-    # stay in for loop until you 
     while data[:30] != 'You have logged in. Thank you!':
       
-      # allow them to create an account, exit, or try to log in again
+      # allow them to exit
       message = input("""We were unable to find an account associated with that username and password combination.
       Please type either 'create' to create a new account,
       'exit' to close the server connection/log out, 
       or type 'login' to attempt to log in again.
       """)
-
       # exit- close the connection
       if message.lower().strip() == 'exit':
         print(f'Connection closed.')
@@ -191,46 +188,63 @@ class ClientSocket:
         self.client.close()
         break
 
-      # create new account- reroute to that function
       elif message.lower().strip() == 'create':
-        self.create_client_username(message, host, port)
+        self.create_client_username(client_buf)
         break
 
-
       else: 
-        # requery the client to restart login process
-        inform_status = 'login'
-        self.client.sendto(inform_status.encode(), (host, port))
+        # requery the client to see if this was a successful username
+        # send over the username to the client
+        # prompt the server to look again for login
+        # the user will send over their username so we want to prompt the server
+        # to anticipate the login input folowed y 
+        client_buf.action = 'login'
+        send_message(self.client, client_buf)
 
-        usrname_input = input("""
+        # this was prior.
+        # will receive back confrmation that you logged in successfully
+        # data = self.client.recv(1024).decode()
+        username_input = input("""
         Please enter your username to log in: 
         """)
+
+        client_buf.client_username = username_input
+
         # send over the username to the server
-        self.client.sendto(usrname_input.encode(), (host, port))
+        send_message(self.client, client_buf)
 
         # will receive back confirmation that username was sent successfully
-        data = self.client.recv(1024).decode()
+        data = recv_message(self.client, chat_pb2.Data)
 
         pwd_input = input("""
         Please enter your password to log in: 
         """)
+        
+        client_buf.client_password = pwd_input
 
         # in the loop, send the password to the server
-        self.client.sendto(pwd_input.encode(), (host, port))
+        send_message(self.client, client_buf)
 
-        # server will send back feedback on whether this was a valid login or not
-        data = self.client.recv(1024).decode()
+        data = recv_message(self.client, chat_pb2.Data)
     
-    # can exit while loop on success (logged in) or if the loop breaks (with create/exit)
+    # can exit while loop on success (logged in) or on a break 
     if data[:30] == 'You have logged in. Thank you!':
-      # only if logged in, update the variables
       print("Successfully logged in.")
       self.logged_in = True
-      self.username = usrname_input
+      # self.username = username_input
+      client_buf.client_username = username_input
 
-      if data[30:] != 'No messages available':
-          available_msgs = data[30:].split('we_love_cs262')[1:]
+      client_msgs = client_buf.available_messages[30:]
+
+      if client_msgs != 'No messages available':
+          available_msgs = client_msgs.split('we_love_cs262')[1:]
           self.deliver_available_msgs(available_msgs)
+
+      # if data[30:] != 'No messages available':
+      #     available_msgs = data[30:].split('we_love_cs262')[1:]
+      #     self.deliver_available_msgs(available_msgs)
+
+
 
   # function to delete the client account
   def delete_client_account(self, message, host, port):
@@ -276,7 +290,7 @@ class ClientSocket:
 
         # login function
         if message.lower().strip()[:5] == 'login':
-          self.login_client_account(message, host, port)
+          self.login_client_account(client_buf)
           break
 
         # create function
