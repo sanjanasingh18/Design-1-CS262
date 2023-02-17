@@ -76,10 +76,10 @@ class Server:
 
     def is_username_valid(self, recipient_username):
         # cannot be in account_list (must be a unique username)
-        # TODO- lock mutex
+        # lock mutex
         self.account_list_lock.acquire()
         result =  recipient_username in self.account_list
-        # TODO- unlock mutex
+        # unlock mutex
         self.account_list_lock.release()
         return result
 
@@ -88,37 +88,43 @@ class Server:
     def add_message_to_queue(self, sender_username, recipient_username, message):
         # queue format is strings of sender_username + "" + message
         message_string = sender_username + message
-        # TODO- lock mutex
+        # lock mutex
         self.account_list_lock.acquire()
         self.account_list.get(recipient_username).addMessage(message_string)
-        # TODO- unlock mutex
+        # unlock mutex
         self.account_list_lock.release()
 
-
     # returns True upon successful delivery. returns False if it fails.
-    def deliver_message(self, sender_username, recipient_username, host, port, conn):
+    def deliver_message(self, sender_username, recipient_username, client_buf, conn):
         # If username is invalid, throw error message
         if not self.is_username_valid(recipient_username): #== "Recipient username is not valid.":
             recipient_not_found = "User not found."
             print(recipient_not_found)
-            conn.sendto(recipient_not_found.encode(), (host, port))
+            client_buf.message = recipient_not_found
+            send_message(conn, client_buf)
+            #conn.sendto(recipient_not_found.encode(), (host, port))
             return False
 
         # query the client for what the message is
         confirmed_found_recipient = "User found. Please enter your message: "
         print(confirmed_found_recipient)
-        conn.sendto(confirmed_found_recipient.encode(), (host, port))
+        client_buf.message = confirmed_found_recipient
+        send_message(conn, client_buf)
+        #conn.sendto(confirmed_found_recipient.encode(), (host, port))
 
         # server will receive what the message the client wants to send is 
-        message = conn.recv(1024).decode()
-        
+        # message = conn.recv(1024).decode()
+        message = recv_message(conn, chat_pb2.Data).message
+
         # regardless of client status (logged in or not), add the message to the recipient queue
         self.add_message_to_queue(sender_username, recipient_username, message)
 
         # print + deliver confirmation
         confirmation_message_sent = 'Delivered message ' + message + " to " + recipient_username + " from " + sender_username
         print(confirmation_message_sent)
-        conn.sendto(confirmation_message_sent.encode(), (host, port))
+        client_buf.message = confirmation_message_sent
+        send_message(conn, client_buf)
+        #conn.sendto(confirmation_message_sent.encode(), (host, port))
         return True
 
 
@@ -139,10 +145,10 @@ class Server:
         # username, password, and queue of undelivered messages
         # it will initialize a new account
 
-        # TODO- lock mutex
+        # lock mutex
         self.account_list_lock.acquire()
         self.account_list[username] = ClientSocket()
-        # TODO- unlock mutex
+        # unlock mutex
         self.account_list_lock.release()
 
         # client will send back a password + send over confirmation
@@ -150,10 +156,10 @@ class Server:
         #data = conn.recv(1024).decode()
         # update the password in the object that is being stored in the dictionary
 
-        # TODO- lock mutex
+        # lock mutex
         self.account_list_lock.acquire()
         self.account_list.get(username.strip()).setPassword(pwd)
-        # TODO- unlock mutex
+        # unlock mutex
         self.account_list_lock.release()
 
         message = "Your password is confirmed to be " + pwd
@@ -174,7 +180,7 @@ class Server:
         # empty messages we may obtain new messages in that time and then empty messages
         # that have not yet been read
 
-        # TODO- lock mutex
+        # lock mutex
         self.account_list_lock.acquire()
         msgs = self.account_list.get(client_username).getMessages()
 
@@ -188,7 +194,7 @@ class Server:
             self.account_list.get(client_username).emptyMessages()
         else:
             final_msg += "No messages available"
-        # TODO- unlock mutex
+        # unlock mutex
         self.account_list_lock.release()
 
         client_buf.message = final_msg
@@ -214,7 +220,6 @@ class Server:
 
         # lock mutex
         self.account_list_lock.acquire()
-        # TODOSS- figure out where to UNLOCK mutex
 
         if (username.strip() in self.account_list):
             # get the password corresponding to this
@@ -264,32 +269,34 @@ class Server:
             #conn.sendto(message.encode(), (host, port))
 
 
-
-    def delete_account(self, username, host, port, conn):
-        # TODO make protocol buffer so that every time a client send a message we send their UUID and their message
-        # You can only delete your account once you are logged in so it handles undelivered messages
+    def delete_account(self, username, client_buf, conn):
+        # You can only delete your account once you are logged in so it handles
+        # undelivered messages
         if username in self.account_list:
             # check if there are any messages in the queue to be delivered
             # if so, deliver them
             del self.account_list[username]
             print("Successfully deleted client account", self.account_list)
             message = 'Account successfully deleted.'
-            conn.sendto(message.encode(), (host, port))
+            client_buf.message = message
+            send_message(conn, client_buf)
+            #conn.sendto(message.encode(), (host, port))
         else:
             # want to prompt the client to either try again or create account
             message = 'Error deleting account'
             print(message)
-            conn.sendto(message.encode(), (host, port))
+            client_buf.message = message
+            send_message(conn, client_buf)
+            #conn.sendto(message.encode(), (host, port))
 
 
     # function to list all active (non-deleted) accounts
     # add a return statement so it is easier to Unittest
     def list_accounts(self):
-
-        # TODO- lock mutex 
+        # lock mutex 
         self.account_list_lock.acquire()       
         listed_accounts = str(list(self.account_list.keys()))
-        # TODO- unlock mutex
+        # unlock mutex
         self.account_list_lock.release()
 
         return listed_accounts
@@ -302,9 +309,7 @@ class Server:
         while True:
             # receive from client
             data = recv_message(conn, chat_pb2.Data)
-            print('uhhh', data)
-            data = data.action
-            print('um', data)
+            #data = data.action
             #data = conn.recv(1024).decode()
 
             
@@ -315,32 +320,30 @@ class Server:
 
             print('Message from client: ' + data)
 
-            # check if data equals 'login'- take substring as we send login + username to server
-            if data.lower().strip()[:5] == 'login':
+            # check if data equals 'login'
+            if data.action == 'login':
                 curr_user = self.login_account(client_buf, conn)
 
-            elif data == 'create':
+            # check if data equals 'create'
+            elif data.action == 'create':
                 curr_user = self.create_username(client_buf, conn)
 
-            # check if data equals 'delete'- take substring as we send  delete + username to server
-            elif data.lower().strip()[:6] == 'delete':
-                # data parsing works correctly
-                # print(data, data.lower().strip(), data.lower().strip()[6:])
-                self.delete_account(data.lower()[6:], host, port, conn)
+            # check if data equals 'delete'
+            elif data.action == 'delete':
+                self.delete_account(data.client_username, client_buf, conn)
                 return
 
             # check if client request to send a message
-            elif data.lower().strip()[:7] == 'sendmsg':
-                # data parsing works correctly
-                # print(data, data.lower().strip()[7:43], data.lower()[44:])
-                self.deliver_message(data.lower().strip()[7:43], data.lower()[44:], host, port, conn)
-
+            elif data.action == 'sendmsg':
+                self.deliver_message(data.client_username, data.recipient_username, client_buf, conn)
 
             # check if client request is to list all accounts
-            elif data.lower().strip()[:9] == 'listaccts':
-                conn.sendto(self.list_accounts().encode(), (host, port))
+            elif data.action == 'listaccts':
+                client_buf.message = self.list_accounts()
+                send_message(conn, client_buf)
+                #conn.sendto(self.list_accounts().encode(), (host, port))
 
-            elif data[:8] == "msgspls!":
+            elif data.action == "msgspls!":
                 self.send_client_messages(curr_user, host, port, conn)
                     
     def server_program(self):
