@@ -356,7 +356,7 @@ class ClientSocket:
           else:
             client_buf.action = 'sendmsg'
             client_buf.client_username = self.getUsername()
-            client_buf.message = message
+            client_buf.recipient_username = message
             send_message(self.client, client_buf)
             data = recv_message(self.client, chat_pb2.Data).message
 
@@ -367,6 +367,7 @@ class ClientSocket:
             if data == "User found. Please enter your message: ":
               message = input(data)
               client_buf.message = message
+              send_message(self.client, client_buf)
               # self.client.sendto(message.encode(), (host, port))
               # receive confirmation from the server that it was delivered
               data = recv_message(self.client, chat_pb2.Data).message
