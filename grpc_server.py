@@ -102,7 +102,6 @@ class Server:
             print(recipient_not_found)
             client_buf.message = recipient_not_found
             send_message(conn, client_buf)
-            #conn.sendto(recipient_not_found.encode(), (host, port))
             return False
 
         # query the client for what the message is
@@ -110,10 +109,8 @@ class Server:
         print(confirmed_found_recipient)
         client_buf.message = confirmed_found_recipient
         send_message(conn, client_buf)
-        #conn.sendto(confirmed_found_recipient.encode(), (host, port))
 
         # server will receive what the message the client wants to send is 
-        # message = conn.recv(1024).decode()
         message = recv_message(conn, chat_pb2.Data).message
 
         # regardless of client status (logged in or not), add the message to the recipient queue
@@ -125,7 +122,6 @@ class Server:
         print(confirmation_message_sent)
         client_buf.message = confirmation_message_sent
         send_message(conn, client_buf)
-        #conn.sendto(confirmation_message_sent.encode(), (host, port))
         return True
 
 
@@ -138,8 +134,6 @@ class Server:
         client_buf.client_username = username
 
         send_message(conn, client_buf)
-        # send_message(self.server, client_buf)
-        #conn.sendto(username.encode(), (host, port))
 
         # add (username: clientSocket object where clientSocket includes log-in status,
         # username, password, and queue of undelivered messages
@@ -153,7 +147,6 @@ class Server:
 
         # client will send back a password + send over confirmation
         pwd = recv_message(conn, chat_pb2.Data).client_password
-        #data = conn.recv(1024).decode()
         # update the password in the object that is being stored in the dictionary
 
         # lock mutex
@@ -165,9 +158,6 @@ class Server:
         message = "Your password is confirmed to be " + pwd
         client_buf.message = message
         send_message(conn, client_buf)
-        #send_message(self.server, client_buf)
-
-        #conn.sendto(message.encode(), (host, port))
         
         return username
 
@@ -201,22 +191,17 @@ class Server:
         client_buf.available_messages = final_msg
         send_message(conn, client_buf)
 
-        #conn.sendto(final_msg.encode(), (host, port))
-
 
     # function to log in to an account
     def login_account(self, client_buf, conn):
         username = recv_message(conn, chat_pb2.Data).client_username
-        #username = conn.recv(1024).decode()
         confirm_received = "Confirming that the username has been received."
         
         client_buf.message = confirm_received
 
         send_message(conn, client_buf)
-        #conn.sendto(confirm_received.encode(), (host, port))
         
         password = recv_message(conn, chat_pb2.Data).client_password
-        #password = conn.recv(1024).decode()
         # ask for login and password and then verify if it works
 
         # lock mutex
@@ -240,7 +225,6 @@ class Server:
                 message = 'Error'
                 client_buf.message = message
                 send_message(conn, client_buf)
-                #conn.sendto(message.encode(), (host, port))
 
         elif (username.strip()[5:] in self.account_list):
             # get the password corresponding to this
@@ -258,7 +242,6 @@ class Server:
                 message = 'Error'
                 client_buf.message = message
                 send_message(conn, client_buf)
-                #conn.sendto(message.encode(), (host, port))
 
         else:
             # unlock mutex
@@ -268,7 +251,6 @@ class Server:
             message = 'Error'
             client_buf.message = message
             send_message(conn, client_buf)
-            #conn.sendto(message.encode(), (host, port))
 
 
     def delete_account(self, username, client_buf, conn):
@@ -284,14 +266,12 @@ class Server:
             message = 'Account successfully deleted.'
             client_buf.message = message
             send_message(conn, client_buf)
-            #conn.sendto(message.encode(), (host, port))
         else:
             # want to prompt the client to either try again or create account
             message = 'Error deleting account'
             print(message)
             client_buf.message = message
             send_message(conn, client_buf)
-            #conn.sendto(message.encode(), (host, port))
 
 
     # function to list all active (non-deleted) accounts
@@ -313,9 +293,6 @@ class Server:
         while True:
             # receive from client
             data = recv_message(conn, chat_pb2.Data)
-            #data = data.action
-            #data = conn.recv(1024).decode()
-
             
             # check if connection closed- if so, close thread
             if not data:
@@ -345,7 +322,6 @@ class Server:
             elif data.action == 'listaccts':
                 client_buf.list_accounts = self.list_accounts()
                 send_message(conn, client_buf)
-                #conn.sendto(self.list_accounts().encode(), (host, port))
 
             elif data.action == "msgspls!":
                 self.send_client_messages(data.client_username, client_buf, conn)
