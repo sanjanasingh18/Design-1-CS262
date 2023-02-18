@@ -74,7 +74,7 @@ class Server:
         self.add_message_to_queue(sender_username, recipient_username, message)
 
         # print + deliver confirmation
-        confirmation_message_sent = 'Delivered message ' + message + " to " + recipient_username + " from " + sender_username
+        confirmation_message_sent = "Delivered message '" + message[:50] + " ...' to " + recipient_username + " from " + sender_username
         print(confirmation_message_sent)
         conn.sendto(confirmation_message_sent.encode(), (host, port))
         return True
