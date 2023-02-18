@@ -74,6 +74,11 @@ class ClientSocket:
     # Add a password input
     pwd_client = input('Enter password: ')
 
+    # What if the users do not enter a password? or one that is too long?
+    while len(pwd_client) < 1 or len(pwd_client) > 1000:
+      print("Error: password is required to be between 1 and 1000 characters")
+      pwd_client = input('Enter password: ')
+
     # Update the password in the client side
     self.password = pwd_client
 
