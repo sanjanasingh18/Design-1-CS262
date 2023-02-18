@@ -4,7 +4,7 @@ import math
 import time
 import uuid
 
-set_port = 8888
+set_port = 8886
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
@@ -83,6 +83,7 @@ class ClientSocket:
     # The server will confirm the password
     confirmation_from_server = self.client.recv(1024).decode()
     print(confirmation_from_server)
+    return self.getUsername()
 
   
   # helper function to parse messages as everything is sent as strings
