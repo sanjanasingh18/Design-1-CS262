@@ -100,7 +100,6 @@ class ClientSocket:
   # helper function to create an account
   def create_client_username(self, client_buf):
     client_buf.action = 'create'
-    print('client_buf', client_buf)
 
     send_message(self.client, client_buf)
     #self.client.sendto(message.encode(), (host, port))

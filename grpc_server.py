@@ -120,7 +120,8 @@ class Server:
         self.add_message_to_queue(sender_username, recipient_username, message)
 
         # print + deliver confirmation
-        confirmation_message_sent = 'Delivered message ' + message + " to " + recipient_username + " from " + sender_username
+        confirmation_message_sent = "Delivered message '" + message[:50] + " ...' to " + recipient_username + " from " + sender_username
+        # confirmation_message_sent = 'Delivered message ' + message + " to " + recipient_username + " from " + sender_username
         print(confirmation_message_sent)
         client_buf.message = confirmation_message_sent
         send_message(conn, client_buf)
@@ -135,7 +136,6 @@ class Server:
         username = str(uuid.uuid4())
         print("Unique username generated for client is "+ username + ".")
         client_buf.client_username = username
-        print(client_buf, 'client_buf')
 
         send_message(conn, client_buf)
         # send_message(self.server, client_buf)
