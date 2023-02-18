@@ -287,7 +287,15 @@ class ClientSocket:
           # list all account usernames
           elif message.lower().strip() == 'listaccts':
             self.client.sendto(message.lower().strip().encode(), (host, port))
-            data = self.client.recv(1024).decode()
+            # will receive from server the length of the account_list
+            len_list = self.client.recv(1024).decode()
+
+            # send confirmation to control input flow
+            message = 'received'
+            self.client.sendto(message.encode(), (host, port))
+
+            # Receive the message data- decode the correct length
+            data = self.client.recv(int(len_list)).decode()
             #feedback = self.client.recv(1024).decode()
             print('Usernames: ' + data)
 
