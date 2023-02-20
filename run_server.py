@@ -121,15 +121,15 @@ class Server:
     def send_client_messages(self, client_username, host, port, conn, prefix=''):
         # prefix is appended to the FRONT of messages to be delivered 
         # prefix is an optional argument as everything is sent as strings
-        final_msg = prefix
-
+        #final_msg = prefix
+        final_msg = ""
         # note that we hold the mutex in this entire area- if we let go of mutex + reacquire to
         # empty messages we may obtain new messages in that time and then empty messages
         # that have not yet been read
 
         # lock mutex
         self.account_list_lock.acquire()
-        
+    
         # get available messages
         msgs = self.account_list.get(client_username).getMessages()
 
@@ -143,9 +143,20 @@ class Server:
             # clear all delivered messages as soon as possible to address concurent access
             self.account_list.get(client_username).emptyMessages()
         else:
-            final_msg += "No messages available"
+            final_msg += "No messages available" 
         # unlock mutex
         self.account_list_lock.release()
+        
+        # prefix + length of final msg- there is only a prefix
+        # for the login function 
+        len_msg = prefix + str(len(final_msg))
+
+        # first send over the length of the message
+        #len_msg = str(len(final_msg))
+        conn.sendto(len_msg.encode(), (host, port))
+
+        # receive back confirmation from the Client (this is to control info flow)
+        confirmed = conn.recv(1024).decode()
 
         # note that the prefix will always be sent
         conn.sendto(final_msg.encode(), (host, port))

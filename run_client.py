@@ -322,7 +322,13 @@ class ClientSocket:
           self.client.sendto(message.encode(), (host, port))
 
           # server will send back messages
-          data = self.client.recv(1024).decode()
+          # server will send back the length of messages
+          len_msgs = self.client.recv(1024).decode()
+
+          # send message to control info flow (ensure you are ready to decode msg)
+          message = 'ok'
+          self.client.sendto(message.encode(), (host, port))
+
           if data != 'No messages available':
             # deliver available messages if there are any
             available_msgs = data.split('we_love_cs262')[1:]
