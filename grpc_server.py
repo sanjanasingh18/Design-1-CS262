@@ -171,6 +171,7 @@ class Server:
         return username
 
     # send messages to the client that are in the queue to be delivered for that client
+    # returns what messages are sent over
     def send_client_messages(self, client_username, client_buf, conn, prefix=''):
         # want to receive all undelivered messages
         final_msg = prefix
@@ -204,8 +205,11 @@ class Server:
         client_buf.available_messages = final_msg
         send_message(conn, client_buf)
 
+        return final_msg
+
 
     # function to log in to an account
+    # Returns the username if the account is logged into, or False otherwise
     def login_account(self, client_buf, conn):
         # ask for login and password and then verify if it works
         # receive the username from Client and send confirmation that it was received
@@ -242,6 +246,7 @@ class Server:
                 message = 'Error'
                 client_buf.message = message
                 send_message(conn, client_buf)
+                return False
 
         elif (username.strip()[5:] in self.account_list):
             # get the password corresponding to this
@@ -262,6 +267,7 @@ class Server:
                 message = 'Error'
                 client_buf.message = message
                 send_message(conn, client_buf)
+                return False
 
         else:
             # unlock mutex
@@ -271,8 +277,10 @@ class Server:
             message = 'Error'
             client_buf.message = message
             send_message(conn, client_buf)
+            return False
 
-
+    # function to delete a client account 
+    # return True if it was successfully deleted, False otherwise
     def delete_account(self, username, client_buf, conn):
         # You can only delete your account once you are logged in so this handles
         # undelivered messages
@@ -283,15 +291,18 @@ class Server:
             message = 'Account successfully deleted.'
             client_buf.message = message
             send_message(conn, client_buf)
+            return True
         else:
             # want to prompt the client to either try again or create account
             message = 'Error deleting account'
             print(message)
             client_buf.message = message
             send_message(conn, client_buf)
+            return False
 
 
     # function to return all active (non-deleted) accounts
+    # returns the list of accounts
     def list_accounts(self):
         # lock mutex 
         self.account_list_lock.acquire()       
@@ -301,6 +312,8 @@ class Server:
 
         return listed_accounts
 
+    # function that does the heavy lifting of server, client communication
+    # this function returns nothing, exits only when the Client closes
     def server_to_client(self, host, conn, port):
         curr_user = ''
 

@@ -53,6 +53,7 @@ class Server:
         self.account_list.get(recipient_username).addMessage(message_string)
         # unlock mutex
         self.account_list_lock.release()
+        return True
 
 
     # returns True upon successful message delivery. returns False if it fails.
@@ -73,16 +74,23 @@ class Server:
         message = conn.recv(1024).decode()
         
         # regardless of client status (logged in or not), add the message to the recipient queue
-        self.add_message_to_queue(sender_username, recipient_username, message)
-
-        # print + deliver confirmation
-        confirmation_message_sent = "Delivered message '" + message[:50] + " ...' to " + recipient_username + " from " + sender_username
-        print(confirmation_message_sent)
-        conn.sendto(confirmation_message_sent.encode(), (host, port))
-        return True
+        if self.add_message_to_queue(sender_username, recipient_username, message):
+            # print + deliver confirmation
+            confirmation_message_sent = "Delivered message '" + message[:50] + " ...' to " + recipient_username + " from " + sender_username
+            print(confirmation_message_sent)
+            conn.sendto(confirmation_message_sent.encode(), (host, port))
+            return True
+        
+        # if the message did not deliver, deliver an error message
+        else:
+            message_did_not_work = "Message could not be delivered. Please try again."
+            print(message_did_not_work)
+            conn.sendto(confirmation_message_sent.encode(), (host, port))
+            return False
 
 
     # function to create an account/username for a new user
+    # returns the username created
     def create_username(self, host, port, conn):
 
         # server will generate UUID, print UUID, send info to client
@@ -118,6 +126,7 @@ class Server:
         return username
 
     # send messages to the client that are in the client's message queue
+    # returns what messages are sent over
     def send_client_messages(self, client_username, host, port, conn, prefix=''):
         # prefix is appended to the FRONT of messages to be delivered 
         # prefix is an optional argument as everything is sent as strings
@@ -147,7 +156,6 @@ class Server:
             final_msg += "No messages available" 
         # unlock mutex
         self.account_list_lock.release()
-        
 
         # first send over the length of the message
         # SEND prefix + length of final msg- there is only a prefix for login 
@@ -160,8 +168,10 @@ class Server:
         # then, send over the final message
         conn.sendto(final_msg.encode(), (host, port))
 
+        return final_msg
 
-    # function to log in to an account
+    # Function to log in to an account
+    # Returns the username if the account is logged into, or False otherwise
     def login_account(self, host, port, conn):
 
         # ask for login and password and then verify if it works
@@ -195,6 +205,7 @@ class Server:
                 print("Account not found.")
                 message = 'Error'
                 conn.sendto(message.encode(), (host, port))
+                return False
 
         # see if username is valid- some cases it is concatenated with 'login' before
         elif (username.strip()[5:] in self.account_list):
@@ -211,6 +222,7 @@ class Server:
                 print("Account not found.")
                 message = 'Error'
                 conn.sendto(message.encode(), (host, port))
+                return False
 
         else:
             # unlock mutex
@@ -219,9 +231,11 @@ class Server:
             print("Account not found.")
             message = 'Error'
             conn.sendto(message.encode(), (host, port))
+            return False
 
 
     # function to delete a client account 
+    # return True if it was successfully deleted, False otherwise
     def delete_account(self, username, host, port, conn):
         # You can only delete your account once you are logged in 
 
@@ -232,15 +246,17 @@ class Server:
             print("Successfully deleted client account, remaining accounts: ", self.account_list)
             message = 'Account successfully deleted.'
             conn.sendto(message.encode(), (host, port))
+            return True
         else:
             # want to inform the client that it was unable to delete account
             message = 'Error deleting account'
             print(message)
             conn.sendto(message.encode(), (host, port))
+            return False
 
 
     # function to list all active (non-deleted) accounts
-    # add a return statement so it is easier to Unittest
+    # return (the length of the listed accounts, listed accounts)
     def list_accounts(self):
 
         # lock mutex 
@@ -254,6 +270,7 @@ class Server:
         return len(listed_accounts), listed_accounts
 
     # function that does the heavy lifting of server, client communication
+    # this function returns nothing, exits only when the Client closes
     def server_to_client(self, host, conn, port):
         
         # keep track of the current client on this thread
@@ -327,7 +344,6 @@ class Server:
             print(f'{addr} connected to server.')
 
             # Start a new thread with this client
-            #start_new_thread(server_to_client, (host, conn, port, ))
             curr_thread = threading.Thread(target=self.server_to_client, args=(host, conn, port,))
             curr_thread.start()
 
