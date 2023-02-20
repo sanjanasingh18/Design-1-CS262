@@ -121,7 +121,8 @@ class Server:
     def send_client_messages(self, client_username, host, port, conn, prefix=''):
         # prefix is appended to the FRONT of messages to be delivered 
         # prefix is an optional argument as everything is sent as strings
-        #final_msg = prefix
+        # prefix is ONLY used in the login function to send conffirmation
+
         final_msg = ""
         # note that we hold the mutex in this entire area- if we let go of mutex + reacquire to
         # empty messages we may obtain new messages in that time and then empty messages
@@ -147,18 +148,16 @@ class Server:
         # unlock mutex
         self.account_list_lock.release()
         
-        # prefix + length of final msg- there is only a prefix
-        # for the login function 
-        len_msg = prefix + str(len(final_msg))
 
         # first send over the length of the message
-        #len_msg = str(len(final_msg))
+        # SEND prefix + length of final msg- there is only a prefix for login 
+        len_msg = prefix + str(len(final_msg))        
         conn.sendto(len_msg.encode(), (host, port))
 
         # receive back confirmation from the Client (this is to control info flow)
         confirmed = conn.recv(1024).decode()
 
-        # note that the prefix will always be sent
+        # then, send over the final message
         conn.sendto(final_msg.encode(), (host, port))
 
 
