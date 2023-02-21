@@ -26,19 +26,12 @@ expected_password = "hi"
 # https://docs.python.org/2/library/unittest.html from section 25.3.1 
 
 class TestStringMethods(unittest.TestCase):
-    #setup_done = False
     def setUp(self):
-        #if TestStringMethods.setup_done:
-        #    return
-        #TestStringMethods.setup_done = True
         self.client_socket = ClientSocket()
         host = set_host
         port = set_port
 
         self.client_socket.client.connect((host, port))
-
-    #@classmethod
-    #def setupClass(self):
 
     def tearDown(self):
         self.client_socket.client.close()
@@ -67,17 +60,22 @@ class TestStringMethods(unittest.TestCase):
     def test_delete_account(self):
         print("Testing the DELETE function")
         # assert that after we have created an account, it is deleted (returns True)
-        created_username = self.client_socket.create_client_username("create", set_host, set_port)
+        self.client_socket.create_client_username("create", set_host, set_port)
         self.assertEqual(self.client_socket.delete_client_account("delete", set_host, set_port), True)
     
     def test_send_messages(self):
         print("Testing the SEND MESSAGE function")
-        print('oops')
+        self.client_socket.create_client_username("create", set_host, set_port)
 
 
     def test_view_account_list(self):
         print("Testing the VIEW ACCOUNTS function")
-        #self.assertEqual(self.client_socket.create_client_username("create", set_host, set_port), self.client_socket.getUsername())
+
+        self.client_socket.create_client_username("create", set_host, set_port)
+        list_of_accounts = self.client_socket.list_accounts("listaccts", set_host, set_port)
+        is_in_account_list = self.client_socket.getUsername() in list_of_accounts
+        self.assertEqual(is_in_account_list, True)
+
         """self.client_socket.client.send('create'.encode())
         
         # create will send back the username
@@ -106,9 +104,6 @@ class TestStringMethods(unittest.TestCase):
         #expected_pwd_message = "Your password is confirmed to be " + pwd_draft
         #self.assertEqual(self.client_socket.client.recv(1024).decode(), expected_pwd_message)
 
-    #def test_2(self):
-        #self.client_socket.client.send('message2'.encode())
-        #self.assertEqual(self.client_socket.client.recv(1024).decode(), 'reply2')
 
 if __name__ == '__main__':
     unittest.main()
