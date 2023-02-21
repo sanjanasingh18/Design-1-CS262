@@ -132,8 +132,11 @@ class ClientSocket:
     confirmation_from_server = recv_message(self.client, chat_pb2.Data).message
     print(confirmation_from_server)
 
+    return self.getUsername()
+
   
   # helper function to parse messages as everything is sent as strings
+  # return is of the format (sender UUID, message)
   def parse_live_message(self, message):
     # message format is senderUUID+message
     # UUID is 36 characters total (fixed length)
@@ -141,6 +144,7 @@ class ClientSocket:
     return (message[:36], message[36:])
 
   # function to print all available messages
+  # returns the # of messages delivered
   def deliver_available_msgs(self, available_msgs):
     # receive all undelivered messages
     for received_msg in available_msgs:
@@ -149,8 +153,11 @@ class ClientSocket:
       sender_username, msg = self.parse_live_message(received_msg)
       print("Message from " + sender_username + ": " + msg)
 
+    return len(available_msgs)
 
   # helper function to login to a client account
+  # returns the username that you log into (either with create or login)
+  # or False if you exit
   def login_client_account(self, client_buf):
 
     client_buf.action = 'login'
@@ -196,12 +203,11 @@ class ClientSocket:
         print(f'Connection closed.')
         self.logged_in = False
         self.client.close()
-        break
+        return False
         
-      # create an account
+      # create an account- return the username created
       elif message.lower().strip() == 'create':
-        self.create_client_username(client_buf)
-        break
+        return self.create_client_username(client_buf)
 
       else: 
         # requery the client to see if this was a successful username
@@ -246,28 +252,22 @@ class ClientSocket:
       self.logged_in = True
       self.username = username_input
 
-      # TODO - delete these comments, they were here
-      # before I fixed code.
-      # send request to client for messages
-      #client_buf.action = 'msgspls!'
-      #client_buf.client_username = username_input
-      #send_message(self.client, client_buf)
-
-      # data will send over messages
-      #data = recv_message(self.client, chat_pb2.Data)
-      # get the available messages in the client buffer
-      # stale comments END HERE
-
       # access available_messages in most recent client buffer sent over
       client_msgs = rec_buff.available_messages
 
       # if there are messages, deliver them
       if client_msgs != 'No messages available':
-          available_msgs = client_msgs.split('we_love_cs262')[1:]
-          self.deliver_available_msgs(available_msgs)
+        available_msgs = client_msgs.split('we_love_cs262')[1:]
+        self.deliver_available_msgs(available_msgs)
+      
+      # return the username of the account logged into
+      return self.username
+      
+
 
 
   # function to delete the client account
+  # return True if it was successfully deleted, False otherwise
   def delete_client_account(self, client_buf):
     
     # populate the client buffer with the action delete and client username & send to Server
@@ -280,8 +280,10 @@ class ClientSocket:
     if data == 'Account successfully deleted.':
       self.logged_in = False
       print("Successfully deleted account.")
+      return True
     else:
       print("Unsuccessfully deleted account.")
+      return False
 
 
   # this is the main client program that we run- it calls on all subfunctions

@@ -57,6 +57,7 @@ class ClientSocket:
 
 
   # Function to create a new account
+  # returns the client username
   def create_client_username(self, message, host, port):
     # message contains 'create'- send this to the server
     # so the server runs the create function
@@ -92,22 +93,27 @@ class ClientSocket:
 
   
   # helper function to parse messages as everything is sent as strings
+  # return is of the format (sender UUID, message)
   def parse_live_message(self, message):
     # message format is senderUUID+message
     # UUID is 36 characters total (fixed length)
-    # return is of the format (sender UUID, message)
     return (message[:36], message[36:])
 
   # function to print all available messages
+  # returns the # of messages delivered
   def deliver_available_msgs(self, available_msgs):
     # want to receive all undelivered messages
     for received_msg in available_msgs:
       # get Messages() has 
       sender_username, msg = self.parse_live_message(received_msg)
       print("Message from " + sender_username + ": " + msg)
+    
+    return len(available_msgs)
 
 
   # Function to login to a client account
+  # returns the username that you log into (either with create or login)
+  # or False if you exit
   def login_client_account(self, message, host, port):
 
     # ensure that the server knows that it is the login function
@@ -151,13 +157,12 @@ class ClientSocket:
         print(f'Connection closed.')
         self.logged_in = False
         self.client.close()
-        break
+        return False
 
       # create new account- reroute to that function
+      # return what the function returns- it will return the new username
       elif message.lower().strip() == 'create':
-        self.create_client_username(message, host, port)
-        break
-
+        return self.create_client_username(message, host, port)
 
       else: 
         # requery the client to restart login process
@@ -204,7 +209,11 @@ class ClientSocket:
           available_msgs = data.split('we_love_cs262')[1:]
           self.deliver_available_msgs(available_msgs)
 
+      # return username of logged in account 
+      return self.username
+
   # function to delete the client account
+  # return True if it was successfully deleted, False otherwise
   def delete_client_account(self, message, host, port):
 
     # send a message that is 'delete' followed by the username to be parsed by the other side
@@ -219,8 +228,10 @@ class ClientSocket:
     if data == 'Account successfully deleted.':
       self.logged_in = False
       print("Successfully deleted account.")
+      return True
     else:
       print("Unsuccessfully deleted account.")
+      return False
 
 
   # this is the main client program that we run- it calls on all subfunctions
