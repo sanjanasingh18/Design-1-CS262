@@ -1,9 +1,8 @@
 """
 Configuration (BEFORE RUNNING `python3 test_client.py`)
-In a separate terminal run `python3 run_server.py` and wait for 'Server is active'.
+In a separate terminal run `python3 grpc_server.py` and wait for 'Server is active'.
 
-Now, run `python3 test_client.py` in another terminal. 
-
+Now, run `python3 test_grpc_client.py` in another terminal.
 """
 
 import os
@@ -13,9 +12,7 @@ import time
 import uuid
 import uuid
 import unittest
-from run_client import ClientSocket
-from run_server import Server
-#from grpc_client import ClientSocket
+from grpc_client import ClientSocket
 
 set_port = 8887
 set_host = ''
@@ -53,7 +50,7 @@ class TestStringMethods(unittest.TestCase):
         self.client_socket.client.send('exit'.encode())
 
         # log into the account
-        username_logged_into = self.client_socket.login_client_account("login", set_host, set_port, usrname_input=created_username, pwd_input=expected_password)
+        username_logged_into = self.client_socket.login_client_account("login", set_host, set_port, username_input=created_username, pwd_input=expected_password)
         self.assertEqual(created_username, username_logged_into)
 
     def test_delete_account(self):

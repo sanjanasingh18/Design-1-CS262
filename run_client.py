@@ -128,7 +128,7 @@ class ClientSocket:
       Please enter your username to log in: 
       """)
 
-    time.sleep(1)
+    time.sleep(0.5)
     # send over the username to the server
     self.client.sendto(usrname_input.encode(), (host, port))
 
@@ -140,7 +140,7 @@ class ClientSocket:
       Please enter your password to log in: 
       """)
 
-    time.sleep(1)
+    time.sleep(0.5)
     # in the loop, send the password to the server
     self.client.sendto(pwd_input.encode(), (host, port))
 

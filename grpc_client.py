@@ -97,7 +97,7 @@ class ClientSocket:
 
 
   # helper function to create an account
-  def create_client_username(self, client_buf):
+  def create_client_username(self, client_buf, pwd_client = None):
     client_buf.action = 'create'
 
     # inform the server of the client's action to create an account
@@ -114,13 +114,14 @@ class ClientSocket:
     self.logged_in = True
     print('Your unique username is '  + data.client_username)
 
-    # add a password input
-    pwd_client = input('Enter password: ')
-
-    # Ensures the users do not enter a password or one that is too long
-    while len(pwd_client) < 1 or len(pwd_client) > 950:
-      print("Error: password is required to be between 1 and 950 characters")
+    if not pwd_client:
+      # add a password input
       pwd_client = input('Enter password: ')
+
+      # Ensures the users do not enter a password or one that is too long
+      while len(pwd_client) < 1 or len(pwd_client) > 950:
+        print("Error: password is required to be between 1 and 950 characters")
+        pwd_client = input('Enter password: ')
 
     # update the password in the ClientSocket object 
     client_buf.client_password = pwd_client
@@ -158,29 +159,36 @@ class ClientSocket:
   # helper function to login to a client account
   # returns the username that you log into (either with create or login)
   # or False if you exit
-  def login_client_account(self, client_buf):
+  def login_client_account(self, client_buf, username_input = None, pwd_input = None):
 
     client_buf.action = 'login'
 
     # ensure that the server knows that it is the login function
     send_message(self.client, client_buf)
 
-    username_input = input("""
-    Please enter your username to log in: 
-    """)
+    if not username_input:
+      # client will enter a username
+      username_input = input("""
+      Please enter your username to log in: 
+      """)
+
     client_buf.client_username = username_input
 
+    time.sleep(0.5)
     # send over the username to the server
     send_message(self.client, client_buf)
 
     # receive back confirmation that username was sent successfully
     data = recv_message(self.client, chat_pb2.Data)
 
-    pwd_input = input("""
-    Please enter your password to log in: 
-    """)
+    if not pwd_input:
+      # client will enter a password
+      pwd_input = input("""
+      Please enter your password to log in: 
+      """)
     client_buf.client_password = pwd_input
 
+    time.sleep(0.5)
     # in the loop, send the password to the server
     send_message(self.client, client_buf)
 
@@ -296,7 +304,7 @@ class ClientSocket:
 
     return data
   
-  def send_messages(self, client_buf, recipient_username):
+  def send_messages(self, client_buf, recipient_username, msg_content = None):
     # populate the client buffer object with necessary inputs
     client_buf.action = 'sendmsg'
     client_buf.client_username = self.getUsername()
@@ -305,6 +313,16 @@ class ClientSocket:
 
     # will receive information on whether the recipient username was found by server
     data = recv_message(self.client, chat_pb2.Data).message
+
+    # if username is found, server will return 'User found. What is your message: '
+    if data == "User found. Please enter your message: ":
+      if not msg_content:
+        msg_content = input(data)
+      client_buf.message = msg_content
+      send_message(self.client, client_buf)
+      # receive confirmation from the server that it was delivered
+      data = recv_message(self.client, chat_pb2.Data).message
+
     return data
   
   def receive_messages(self, client_buf):
@@ -417,13 +435,13 @@ class ClientSocket:
             # # will receive information on whether the recipient username was found by server
             # data = recv_message(self.client, chat_pb2.Data).message
 
-            # if username is found, server will return 'User found. What is your message: '
-            if data == "User found. Please enter your message: ":
-              message = input(data)
-              client_buf.message = message
-              send_message(self.client, client_buf)
-              # receive confirmation from the server that it was delivered
-              data = recv_message(self.client, chat_pb2.Data).message
+            # # if username is found, server will return 'User found. What is your message: '
+            # if data == "User found. Please enter your message: ":
+            #   message = input(data)
+            #   client_buf.message = message
+            #   send_message(self.client, client_buf)
+            #   # receive confirmation from the server that it was delivered
+            #   data = recv_message(self.client, chat_pb2.Data).message
 
               
             # print output of the server- either that it was successfully sent or that the user was not found.
