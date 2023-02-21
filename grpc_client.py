@@ -421,36 +421,13 @@ class ClientSocket:
           else:
             # populate the client buffer object with necessary inputs
             data = self.send_messages(client_buf, message)
-            # client_buf.action = 'sendmsg'
-            # client_buf.client_username = self.getUsername()
-            # client_buf.recipient_username = message
-            # send_message(self.client, client_buf)
-
-            # # will receive information on whether the recipient username was found by server
-            # data = recv_message(self.client, chat_pb2.Data).message
-
-            # # if username is found, server will return 'User found. What is your message: '
-            # if data == "User found. Please enter your message: ":
-            #   message = input(data)
-            #   client_buf.message = message
-            #   send_message(self.client, client_buf)
-            #   # receive confirmation from the server that it was delivered
-            #   data = recv_message(self.client, chat_pb2.Data).message
-
               
             # print output of the server- either that it was successfully sent or that the user was not found.
             print('Message from server: ' + data)
 
           # get all messages that have been delivered to this client
           data = self.receive_messages(client_buf)
-          # client_buf.action = 'msgspls!'
-          # client_buf.client_username = self.getUsername()
 
-          # # inform server that you want to get new messages
-          # send_message(self.client, client_buf)
-
-          # # server will send back messages
-          # data = recv_message(self.client, chat_pb2.Data).available_messages
           if data != 'No messages available':
             # deliver available messages if there are any
             available_msgs = data.split('we_love_cs262')[1:]
@@ -469,9 +446,6 @@ class ClientSocket:
         if message.strip() == 'exit':
           # retrieve messages before exiting
           data = self.receive_messages(client_buf)
-          # client_buf.action = 'msgspls!'
-          # send_message(self.client, client_buf)
-          # data = recv_message(self.client, chat_pb2.Data).available_messages
           if data != 'No messages available':
             available_msgs = data.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
