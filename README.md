@@ -72,3 +72,5 @@ Line 13 on grpc_server.py:
 Common issues:
 - 'Address already in use' issue when you run the files run_server.py or grpc_server.py. Change the set_port variable (line 10, run_server.py OR line 12, grpc_server.py) to be a different value (e.g. 8888) . Then, update the set_port variable ( OR line 12, grpc_client.py) to be that SAME value (e.g. also 8888).
 
+
+Engineering notebook link: https://docs.google.com/document/d/1pnA80_LN36GItKJ1forKOQt7rLHQovoQRkM_wSKjZQc/edit?usp=sharing
