@@ -9,7 +9,7 @@ from google.protobuf.internal.decoder import _DecodeVarint
 
 # encode, decode, send_message, recv_message from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 
-set_port = 8887
+set_port = 8888
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
@@ -166,6 +166,7 @@ class ClientSocket:
     # ensure that the server knows that it is the login function
     send_message(self.client, client_buf)
 
+    # prompt user for username if not supplied by function
     if not username_input:
       # client will enter a username
       username_input = input("""
@@ -174,28 +175,19 @@ class ClientSocket:
 
     client_buf.client_username = username_input
 
-    time.sleep(0.5)
-    # send over the username to the server
-    send_message(self.client, client_buf)
-
-    # receive back confirmation that username was sent successfully
-    data = recv_message(self.client, chat_pb2.Data)
-
+    # prompt user for password if not supplied by function
     if not pwd_input:
       # client will enter a password
       pwd_input = input("""
-      Please enter your password to log in: 
+      #Please enter your password to log in: 
       """)
     client_buf.client_password = pwd_input
 
-    time.sleep(0.5)
-    # in the loop, send the password to the server
+    # send username + password information
     send_message(self.client, client_buf)
-
     # will receive confirmation from the server whether you successfully logged in
     rec_buff = recv_message(self.client, chat_pb2.Data)
     data = rec_buff.message
-    #data = recv_message(self.client, chat_pb2.Data).message
 
     # continue re-prompting until the user logs in, creates a new account, or exits
     while data[:30] != 'You have logged in. Thank you!':
@@ -232,12 +224,6 @@ class ClientSocket:
 
         client_buf.client_username = username_input
 
-        # send over the username to the server
-        send_message(self.client, client_buf)
-
-        # will receive back confirmation that username was sent successfully
-        data = recv_message(self.client, chat_pb2.Data)
-
         pwd_input = input("""
         Please enter your password to log in: 
         """)
@@ -249,7 +235,6 @@ class ClientSocket:
 
         rec_buff = recv_message(self.client, chat_pb2.Data)
         # data again will let you know if this was a successful log in
-        #data = recv_message(self.client, chat_pb2.Data).message
         data = rec_buff.message
     
     # can exit while loop on success (logged in) or on a break 
@@ -436,36 +421,13 @@ class ClientSocket:
           else:
             # populate the client buffer object with necessary inputs
             data = self.send_messages(client_buf, message)
-            # client_buf.action = 'sendmsg'
-            # client_buf.client_username = self.getUsername()
-            # client_buf.recipient_username = message
-            # send_message(self.client, client_buf)
-
-            # # will receive information on whether the recipient username was found by server
-            # data = recv_message(self.client, chat_pb2.Data).message
-
-            # # if username is found, server will return 'User found. What is your message: '
-            # if data == "User found. Please enter your message: ":
-            #   message = input(data)
-            #   client_buf.message = message
-            #   send_message(self.client, client_buf)
-            #   # receive confirmation from the server that it was delivered
-            #   data = recv_message(self.client, chat_pb2.Data).message
-
               
             # print output of the server- either that it was successfully sent or that the user was not found.
             print('Message from server: ' + data)
 
           # get all messages that have been delivered to this client
           data = self.receive_messages(client_buf)
-          # client_buf.action = 'msgspls!'
-          # client_buf.client_username = self.getUsername()
 
-          # # inform server that you want to get new messages
-          # send_message(self.client, client_buf)
-
-          # # server will send back messages
-          # data = recv_message(self.client, chat_pb2.Data).available_messages
           if data != 'No messages available':
             # deliver available messages if there are any
             available_msgs = data.split('we_love_cs262')[1:]
@@ -484,9 +446,6 @@ class ClientSocket:
         if message.strip() == 'exit':
           # retrieve messages before exiting
           data = self.receive_messages(client_buf)
-          # client_buf.action = 'msgspls!'
-          # send_message(self.client, client_buf)
-          # data = recv_message(self.client, chat_pb2.Data).available_messages
           if data != 'No messages available':
             available_msgs = data.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
