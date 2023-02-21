@@ -64,8 +64,9 @@ class TestStringMethods(unittest.TestCase):
         created_username = self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
         print("Username is:", created_username)
         # log out of the account
+
+        #TODO make this exit function
         client_buf.action = 'exit'
-        #self.client_socket.client.send('exit'.encode())
         send_message(self.client_socket.client, client_buf)
         # log into the account
         username_logged_into = self.client_socket.login_client_account(client_buf, username_input=created_username, pwd_input=expected_password)
@@ -79,7 +80,7 @@ class TestStringMethods(unittest.TestCase):
         self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
         self.assertEqual(self.client_socket.delete_client_account(client_buf), True)
     
-    def test_send_messages(self):
+    def test_send_messages_to_myself(self):
         # test sending message to yourself. we were unable to 
         print("Testing the SEND MESSAGE function. ")
         client_buf = chat_pb2.Data()
@@ -90,7 +91,7 @@ class TestStringMethods(unittest.TestCase):
         expected_confirmation = "Delivered message '" + msg_content + " ...' to " + sender_username + " from " + sender_username
         self.assertEqual(confirmation_from_server, expected_confirmation)
 
-    def test_receive_messages(self):
+    def test_receive_messages_to_myself(self):
         print("Testing the RECEIVE MESSAGE function.")
         client_buf = chat_pb2.Data()
         curr_username = self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
@@ -100,6 +101,49 @@ class TestStringMethods(unittest.TestCase):
         confirmation_from_server = self.client_socket.receive_messages(client_buf)
         expected_confirmation = "we_love_cs262" + curr_username + "abc"
         self.assertEqual(confirmation_from_server, expected_confirmation)
+    
+    def test_send_messages_to_others(self):
+        print("Testing the SEND MESSAGE function to another client.")
+        client_buf = chat_pb2.Data()
+        sender_username = self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
+        time.sleep(1)
+
+        # make other client
+        other_client = ClientSocket()
+        other_client.client.connect((set_host, set_port))
+        other_username = other_client.create_client_username(client_buf, pwd_client=expected_password)
+
+        confirmation_from_server = self.client_socket.send_messages(client_buf, other_username, msg_content=msg_content)
+        expected_confirmation = "Delivered message '" + msg_content + " ...' to " + other_username + " from " + sender_username
+        self.assertEqual(confirmation_from_server, expected_confirmation)
+        # exit other socket
+        #TODO make this exit fucntion
+        client_buf.action = 'exit'
+        send_message(other_client.client, client_buf)
+
+    def test_receive_messages_from_others(self):
+        print("Testing the RECEIVE MESSAGE function to another client.")
+        client_buf = chat_pb2.Data()
+        recipient_username = self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
+        time.sleep(1)
+
+        # make other client
+        other_client = ClientSocket()
+        other_client.client.connect((set_host, set_port))
+        other_username = other_client.create_client_username(client_buf, pwd_client=expected_password)
+        # send message to recipient
+        other_client.send_messages(client_buf, recipient_username, msg_content=msg_content)
+        time.sleep(1)
+
+        # confirmation you expect to receive 
+        confirmation_from_server = self.client_socket.receive_messages(client_buf)
+        expected_confirmation = "we_love_cs262" + other_username + "abc"
+        self.assertEqual(confirmation_from_server, expected_confirmation)
+
+        # log out of the other_client account
+        #TODO make this exit fucntion
+        client_buf.action = 'exit'
+        send_message(other_client.client, client_buf)
 
     def test_view_account_list(self):
         print("Testing the VIEW ACCOUNTS function")
