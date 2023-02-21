@@ -18,6 +18,9 @@ from google.protobuf.internal.encoder import _VarintEncoder
 from google.protobuf.internal.decoder import _DecodeVarint
 
 
+# TODO add exit test, add edge cases for send and receive on client side
+# send to someone who doesn't exist and receive empty messages
+
 set_port = 8888
 set_host = ''
 expected_password = "hi"
