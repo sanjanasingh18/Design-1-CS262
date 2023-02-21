@@ -126,37 +126,9 @@ class TestStringMethods(unittest.TestCase):
         # self.assertEqual(confirmation_from_server, expected_confirmation)
         # other_object.client.close()
         
-        """self.client_socket.client.send('create'.encode())
-        
-        # create will send back the username
-        username_from_server = self.client_socket.client.recv(1024).decode()
-
-        # enter a password
-        pwd_draft = "pwd"
-        # finish information flow
-        self.client_socket.client.send(pwd_draft.encode())
-        self.client_socket.client.recv(1024).decode()
-
-        # check if the username is updated for the client!
-        self.assertEqual(username_from_server, self.client_socket.getUsername())"""
-
-
-        #self.assertEqual("hi", self.client_socket.getPassword())
-
-        #self.client_socket.client.send('create'.encode())
-        #self.client_socket.create_client_username("create", set_host, set_port)
-        #self.client_socket.client.send('create'.encode())
-
-        #username_from_server = self.client_socket.client.recv(1024).decode()
-        # enter a password
-        #pwd_draft = "pwd"
-        #self.client_socket.client.send(pwd_draft.encode())
-        #expected_pwd_message = "Your password is confirmed to be " + pwd_draft
-        #self.assertEqual(self.client_socket.client.recv(1024).decode(), expected_pwd_message)
-
 
 if __name__ == '__main__':
-    # set up the server once.
+    # set up the server once. This did not work, so you must run the run_server.py file separately.
     # server_instance = Server()
     # server_instance.server.bind((set_host, set_port))
     # server_instance.server.listen()
