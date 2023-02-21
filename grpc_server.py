@@ -1,5 +1,6 @@
 import socket
 import uuid
+import time
 from _thread import *
 import threading
 from run_client import ClientSocket
@@ -9,7 +10,7 @@ from google.protobuf.internal.decoder import _DecodeVarint
 
 # encode, decode, send_message, recv_message from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 
-set_port = 8887
+set_port = 8888
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 
@@ -212,19 +213,13 @@ class Server:
     # Returns the username if the account is logged into, or False otherwise
     def login_account(self, client_buf, conn):
         # ask for login and password and then verify if it works
-        # receive the username from Client and send confirmation that it was received
-        username = recv_message(conn, chat_pb2.Data).client_username
+        time.sleep(1)
 
-        confirm_received = "Confirming that the username has been received."
-        client_buf.message = confirm_received
-        send_message(conn, client_buf)
-        
-        # receive the password from the client 
-        password = recv_message(conn, chat_pb2.Data).client_password
-
+        data = recv_message(conn, chat_pb2.Data)
+        username = data.client_username
+        password = data.client_password
         # lock mutex
         self.account_list_lock.acquire()
-
         # check if username, password pair is valid
         if (username.strip() in self.account_list):
             # get the password corresponding to this

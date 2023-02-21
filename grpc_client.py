@@ -9,7 +9,7 @@ from google.protobuf.internal.decoder import _DecodeVarint
 
 # encode, decode, send_message, recv_message from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 
-set_port = 8887
+set_port = 8888
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
@@ -166,6 +166,7 @@ class ClientSocket:
     # ensure that the server knows that it is the login function
     send_message(self.client, client_buf)
 
+    # prompt user for username if not supplied by function
     if not username_input:
       # client will enter a username
       username_input = input("""
@@ -174,28 +175,19 @@ class ClientSocket:
 
     client_buf.client_username = username_input
 
-    time.sleep(0.5)
-    # send over the username to the server
-    send_message(self.client, client_buf)
-
-    # receive back confirmation that username was sent successfully
-    data = recv_message(self.client, chat_pb2.Data)
-
+    # prompt user for password if not supplied by function
     if not pwd_input:
       # client will enter a password
       pwd_input = input("""
-      Please enter your password to log in: 
+      #Please enter your password to log in: 
       """)
     client_buf.client_password = pwd_input
 
-    time.sleep(0.5)
-    # in the loop, send the password to the server
+    # send username + password information
     send_message(self.client, client_buf)
-
     # will receive confirmation from the server whether you successfully logged in
     rec_buff = recv_message(self.client, chat_pb2.Data)
     data = rec_buff.message
-    #data = recv_message(self.client, chat_pb2.Data).message
 
     # continue re-prompting until the user logs in, creates a new account, or exits
     while data[:30] != 'You have logged in. Thank you!':
@@ -232,12 +224,6 @@ class ClientSocket:
 
         client_buf.client_username = username_input
 
-        # send over the username to the server
-        send_message(self.client, client_buf)
-
-        # will receive back confirmation that username was sent successfully
-        data = recv_message(self.client, chat_pb2.Data)
-
         pwd_input = input("""
         Please enter your password to log in: 
         """)
@@ -249,7 +235,6 @@ class ClientSocket:
 
         rec_buff = recv_message(self.client, chat_pb2.Data)
         # data again will let you know if this was a successful log in
-        #data = recv_message(self.client, chat_pb2.Data).message
         data = rec_buff.message
     
     # can exit while loop on success (logged in) or on a break 
