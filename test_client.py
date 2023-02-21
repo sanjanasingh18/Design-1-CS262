@@ -56,6 +56,12 @@ class TestStringMethods(unittest.TestCase):
         username_logged_into = self.client_socket.login_client_account("login", set_host, set_port, usrname_input=created_username, pwd_input=expected_password)
         self.assertEqual(created_username, username_logged_into)
 
+    def test_incorrect_login_account(self):
+        print('Testing an incorrect password login attempt')
+
+    def test_exit_account(self):
+        print('TODO')
+
     def test_delete_account(self):
         print("Testing the DELETE function")
         # assert that after we have created an account, it is deleted (returns True)
