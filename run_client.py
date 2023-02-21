@@ -233,6 +233,46 @@ class ClientSocket:
       print("Unsuccessfully deleted account.")
       return False
 
+  def list_accounts(self, message, host, port):
+    self.client.sendto(message.lower().strip().encode(), (host, port))
+    # will receive from server the length of the account_list
+    len_list = self.client.recv(1024).decode()
+
+    # send confirmation to control input flow
+    message = 'Ok'
+    self.client.sendto(message.encode(), (host, port))
+
+    # Receive the message data- decode the correct length
+    data = self.client.recv(int(len_list)).decode()
+    return data
+
+  def send_message(self, message, host, port):
+    self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
+    data = self.client.recv(1024).decode()
+
+    # if username is found, server will return 'User found. What is your message: '
+    if data == "User found. Please enter your message: ":
+      message = input(data)
+      self.client.sendto(message.encode(), (host, port))
+      # receive confirmation from the server that it was delivered
+      data = self.client.recv(1024).decode()
+    return data
+
+  def receive_messages(self, message, host, port):
+    # inform server that you want to get new messages
+    self.client.sendto(message.encode(), (host, port))
+
+    # server will send back the length of messages
+    len_msgs = self.client.recv(1024).decode()
+
+    # send message to control info flow (ensure you are ready to decode msg)
+    message = 'ok'
+    self.client.sendto(message.encode(), (host, port))
+
+    # server will send back messages of proper length
+    data = self.client.recv(int(len_msgs)).decode()
+
+    return data
 
   # this is the main client program that we run- it calls on all subfunctions
   def client_program(self):
@@ -288,23 +328,24 @@ class ClientSocket:
           # delete account function
           if message.lower().strip() == 'delete':
             # check remaining msgs
-            message = 'msgspls!'
+            # message = 'msgspls!'
 
-             # inform server that you want to get new messages
-            self.client.sendto(message.encode(), (host, port))
+            #  # inform server that you want to get new messages
+            # self.client.sendto(message.encode(), (host, port))
 
-            # server will send back the length of messages
-            len_msgs = self.client.recv(1024).decode()
+            # # server will send back the length of messages
+            # len_msgs = self.client.recv(1024).decode()
 
-            # send message to control info flow (ensure you are ready to decode msg)
-            message = 'ok'
-            self.client.sendto(message.encode(), (host, port))
+            # # send message to control info flow (ensure you are ready to decode msg)
+            # message = 'ok'
+            # self.client.sendto(message.encode(), (host, port))
 
-            # server will send back messages of proper length
-            data = self.client.recv(int(len_msgs)).decode()
+            # # server will send back messages of proper length
+            # data = self.client.recv(int(len_msgs)).decode()
+            received_msgs = self.receive_messages('msgspls!', host, port)
             
-            if data != 'No messages available':
-              available_msgs = data.split('we_love_cs262')[1:]
+            if received_msgs != 'No messages available':
+              available_msgs = received_msgs.split('we_love_cs262')[1:]
               self.deliver_available_msgs(available_msgs)
             self.delete_client_account('delete', host, port)
             break
@@ -319,53 +360,59 @@ class ClientSocket:
 
           # list all account usernames
           elif message.lower().strip() == 'listaccts':
-            self.client.sendto(message.lower().strip().encode(), (host, port))
-            # will receive from server the length of the account_list
-            len_list = self.client.recv(1024).decode()
+            username_list = self.list_accounts(message, host, port)
+            # self.client.sendto(message.lower().strip().encode(), (host, port))
+            # # will receive from server the length of the account_list
+            # len_list = self.client.recv(1024).decode()
 
-            # send confirmation to control input flow
-            message = 'Ok'
-            self.client.sendto(message.encode(), (host, port))
+            # # send confirmation to control input flow
+            # message = 'Ok'
+            # self.client.sendto(message.encode(), (host, port))
 
-            # Receive the message data- decode the correct length
-            data = self.client.recv(int(len_list)).decode()
-            #feedback = self.client.recv(1024).decode()
-            print('Usernames: ' + data)
+            # # Receive the message data- decode the correct length
+            # data = self.client.recv(int(len_list)).decode()
+
+            print('Usernames: ' + username_list)
 
           # send message otherwise
           else:
-            self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
-            data = self.client.recv(1024).decode()
+            # self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
+            # data = self.client.recv(1024).decode()
 
-            # if username is found, server will return 'User found. What is your message: '
-            if data == "User found. Please enter your message: ":
-              message = input(data)
-              self.client.sendto(message.encode(), (host, port))
-              # receive confirmation from the server that it was delivered
-              data = self.client.recv(1024).decode()
+            # # if username is found, server will return 'User found. What is your message: '
+            # if data == "User found. Please enter your message: ":
+            #   message = input(data)
+            #   self.client.sendto(message.encode(), (host, port))
+            #   # receive confirmation from the server that it was delivered
+            #   data = self.client.recv(1024).decode()
+
+            server_message = self.send_message(message, host, port)
 
               
             # print output of the server- either that it was successfully sent or that the user was not found.
-            print('Message from server: ' + data)
+            print('Message from server: ' + server_message)
 
-          # get all messages that have been delivered to this client
-          message = 'msgspls!'
+          # # get all messages that have been delivered to this client
+          # message = 'msgspls!'
 
-          # inform server that you want to get new messages
-          self.client.sendto(message.encode(), (host, port))
+          # # inform server that you want to get new messages
+          # self.client.sendto(message.encode(), (host, port))
 
-          # server will send back the length of messages
-          len_msgs = self.client.recv(1024).decode()
+          # # server will send back the length of messages
+          # len_msgs = self.client.recv(1024).decode()
 
-          # send message to control info flow (ensure you are ready to decode msg)
-          message = 'ok'
-          self.client.sendto(message.encode(), (host, port))
+          # # send message to control info flow (ensure you are ready to decode msg)
+          # message = 'ok'
+          # self.client.sendto(message.encode(), (host, port))
 
-          # server will send back messages of proper length
-          data = self.client.recv(int(len_msgs)).decode()
-          if data != 'No messages available':
+          # # server will send back messages of proper length
+          # data = self.client.recv(int(len_msgs)).decode()
+
+          received_msgs = self.receive_messages('msgspls!', host, port)
+
+          if received_msgs != 'No messages available':
             # deliver available messages if there are any
-            available_msgs = data.split('we_love_cs262')[1:]
+            available_msgs = received_msgs.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
 
           # re query for new client actions
@@ -380,22 +427,25 @@ class ClientSocket:
         # read undelivered messages for exit
         if message.strip() == 'exit':
           # retrieve messages before exiting
-          get_remaining_msgs = 'msgspls!'
+          # get_remaining_msgs = 'msgspls!'
 
-          # inform server that you want to get new messages
-          self.client.sendto(get_remaining_msgs.encode(), (host, port))
+          # # inform server that you want to get new messages
+          # self.client.sendto(get_remaining_msgs.encode(), (host, port))
 
-          # server will send back the length of messages
-          len_msgs = self.client.recv(1024).decode()
+          # # server will send back the length of messages
+          # len_msgs = self.client.recv(1024).decode()
 
-          # send message to control info flow (ensure you are ready to decode msg)
-          message = 'ok'
-          self.client.sendto(message.encode(), (host, port))
+          # # send message to control info flow (ensure you are ready to decode msg)
+          # message = 'ok'
+          # self.client.sendto(message.encode(), (host, port))
 
-          # server will send back messages of proper length
-          data = self.client.recv(int(len_msgs)).decode()
-          if data != 'No messages available':
-            available_msgs = data.split('we_love_cs262')[1:]
+          # # server will send back messages of proper length
+          # data = self.client.recv(int(len_msgs)).decode()
+
+          received_msgs = self.receive_messages('msgspls!', host, port)
+
+          if received_msgs != 'No messages available':
+            available_msgs = received_msgs.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
 
         self.logged_in = False
