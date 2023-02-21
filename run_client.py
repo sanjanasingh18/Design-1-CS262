@@ -328,20 +328,6 @@ class ClientSocket:
           # delete account function
           if message.lower().strip() == 'delete':
             # check remaining msgs
-            # message = 'msgspls!'
-
-            #  # inform server that you want to get new messages
-            # self.client.sendto(message.encode(), (host, port))
-
-            # # server will send back the length of messages
-            # len_msgs = self.client.recv(1024).decode()
-
-            # # send message to control info flow (ensure you are ready to decode msg)
-            # message = 'ok'
-            # self.client.sendto(message.encode(), (host, port))
-
-            # # server will send back messages of proper length
-            # data = self.client.recv(int(len_msgs)).decode()
             received_msgs = self.receive_messages('msgspls!', host, port)
             
             if received_msgs != 'No messages available':
@@ -361,53 +347,17 @@ class ClientSocket:
           # list all account usernames
           elif message.lower().strip() == 'listaccts':
             username_list = self.list_accounts(message, host, port)
-            # self.client.sendto(message.lower().strip().encode(), (host, port))
-            # # will receive from server the length of the account_list
-            # len_list = self.client.recv(1024).decode()
-
-            # # send confirmation to control input flow
-            # message = 'Ok'
-            # self.client.sendto(message.encode(), (host, port))
-
-            # # Receive the message data- decode the correct length
-            # data = self.client.recv(int(len_list)).decode()
 
             print('Usernames: ' + username_list)
 
           # send message otherwise
           else:
-            # self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
-            # data = self.client.recv(1024).decode()
-
-            # # if username is found, server will return 'User found. What is your message: '
-            # if data == "User found. Please enter your message: ":
-            #   message = input(data)
-            #   self.client.sendto(message.encode(), (host, port))
-            #   # receive confirmation from the server that it was delivered
-            #   data = self.client.recv(1024).decode()
-
             server_message = self.send_message(message, host, port)
-
               
             # print output of the server- either that it was successfully sent or that the user was not found.
             print('Message from server: ' + server_message)
 
           # # get all messages that have been delivered to this client
-          # message = 'msgspls!'
-
-          # # inform server that you want to get new messages
-          # self.client.sendto(message.encode(), (host, port))
-
-          # # server will send back the length of messages
-          # len_msgs = self.client.recv(1024).decode()
-
-          # # send message to control info flow (ensure you are ready to decode msg)
-          # message = 'ok'
-          # self.client.sendto(message.encode(), (host, port))
-
-          # # server will send back messages of proper length
-          # data = self.client.recv(int(len_msgs)).decode()
-
           received_msgs = self.receive_messages('msgspls!', host, port)
 
           if received_msgs != 'No messages available':
@@ -426,22 +376,8 @@ class ClientSocket:
         # will only exit while loops on 'exit' or 'delete'
         # read undelivered messages for exit
         if message.strip() == 'exit':
+
           # retrieve messages before exiting
-          # get_remaining_msgs = 'msgspls!'
-
-          # # inform server that you want to get new messages
-          # self.client.sendto(get_remaining_msgs.encode(), (host, port))
-
-          # # server will send back the length of messages
-          # len_msgs = self.client.recv(1024).decode()
-
-          # # send message to control info flow (ensure you are ready to decode msg)
-          # message = 'ok'
-          # self.client.sendto(message.encode(), (host, port))
-
-          # # server will send back messages of proper length
-          # data = self.client.recv(int(len_msgs)).decode()
-
           received_msgs = self.receive_messages('msgspls!', host, port)
 
           if received_msgs != 'No messages available':
