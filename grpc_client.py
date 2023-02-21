@@ -285,6 +285,14 @@ class ClientSocket:
       print("Unsuccessfully deleted account.")
       return False
 
+  def list_accounts(self, client_buf):
+    return True
+  
+  def send_messages(self, client_buf):
+    return True
+  
+  def receive_messages(self, client_buf):
+    return True
 
   # this is the main client program that we run- it calls on all subfunctions
   def client_program(self):

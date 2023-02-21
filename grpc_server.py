@@ -312,8 +312,7 @@ class Server:
 
         return listed_accounts
 
-    # function that does the heavy lifting of server, client communication
-    # this function returns nothing, exits only when the Client closes
+    
     def server_to_client(self, host, conn, port):
         curr_user = ''
 
