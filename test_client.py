@@ -38,7 +38,7 @@ class TestStringMethods(unittest.TestCase):
     def test_create_account(self):
         # test create- see if the username + password are properly updated
         print("Testing the CREATE function")
-        created_username = self.client_socket.create_client_username("create", set_host, set_port, pwd_client=expected_password)
+        created_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         self.assertEqual(created_username, self.client_socket.getUsername())
         self.assertEqual(expected_password, self.client_socket.getPassword())
 
@@ -47,7 +47,7 @@ class TestStringMethods(unittest.TestCase):
         print("Testing the LOGIN function")
         # test will only pass if you enter the correct password- try it out!
         # want to exit out of the account to see whether that works
-        created_username = self.client_socket.create_client_username("create", set_host, set_port, pwd_client=expected_password)
+        created_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         print("Username is:", created_username)
         # log out of the account
         self.client_socket.client.send('exit'.encode())
@@ -58,20 +58,33 @@ class TestStringMethods(unittest.TestCase):
 
     def test_incorrect_login_account(self):
         print('Testing an incorrect password login attempt')
+        # test will only pass if you enter an incorrect password- try it out!
+        # want to exit out of the account to see whether that works
+        created_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
+        print("Username is:", created_username)
+        # log out of the account
+        self.client_socket.client.send('exit'.encode())
+
+        # fail the log attempt into the account
+        login_status, _ = self.client_socket.send_login_information("login", set_host, set_port, usrname_input=created_username, pwd_input="h")
+        self.assertEqual(login_status, False)
 
     def test_exit_account(self):
-        print('TODO')
+        print('Testing the EXIT function')
+        # assert that after we have created an account, we can successfully log out/exit.
+        self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
+        self.assertEqual(self.client_socket.client_exit(), True)
 
     def test_delete_account(self):
         print("Testing the DELETE function")
         # assert that after we have created an account, it is deleted (returns True)
-        self.client_socket.create_client_username("create", set_host, set_port, pwd_client=expected_password)
-        self.assertEqual(self.client_socket.delete_client_account("delete", set_host, set_port), True)
+        self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
+        self.assertEqual(self.client_socket.delete_client_account(set_host, set_port), True)
     
     def test_send_messages(self):
         # test sending message to yourself. we were unable to 
         print("Testing the SEND MESSAGE function. ")
-        sender_username = self.client_socket.create_client_username("create", set_host, set_port, pwd_client=expected_password)
+        sender_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         # send message to yourself
         confirmation_from_server = self.client_socket.send_message(sender_username, set_host, set_port, msg_content=msg_content)
         # see if the message was delivered as expected
@@ -80,7 +93,7 @@ class TestStringMethods(unittest.TestCase):
 
     def test_receive_messages(self):
         print("Testing the RECEIVE MESSAGE function.")
-        curr_username = self.client_socket.create_client_username("create", set_host, set_port, pwd_client=expected_password)
+        curr_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         # send message to yourself
         self.client_socket.send_message(curr_username, set_host, set_port, msg_content=msg_content)
         # see if the message is received
@@ -111,7 +124,7 @@ class TestStringMethods(unittest.TestCase):
     def test_view_account_list(self):
         print("Testing the VIEW ACCOUNTS function")
 
-        self.client_socket.create_client_username("create", set_host, set_port, pwd_client=expected_password)
+        self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         list_of_accounts = self.client_socket.list_accounts("listaccts", set_host, set_port)
         is_in_account_list = self.client_socket.getUsername() in list_of_accounts
         self.assertEqual(is_in_account_list, True)

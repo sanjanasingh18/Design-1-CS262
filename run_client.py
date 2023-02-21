@@ -58,11 +58,11 @@ class ClientSocket:
 
   # Function to create a new account
   # returns the client username
-  def create_client_username(self, message, host, port, pwd_client = None):
+  def create_client_username(self, host, port, pwd_client = None):
     # message contains 'create'- send this to the server
     # so the server runs the create function
 
-    self.client.sendto(message.encode(), (host, port))
+    self.client.sendto('create'.encode(), (host, port))
 
     # server will send back a username (UUID)
     data = self.client.recv(1024).decode()
@@ -120,36 +120,11 @@ class ClientSocket:
 
     # ensure that the server knows that it is the login function
     # message says 'login'
-    self.client.sendto(message.encode(), (host, port))
+    # attempt to log in, get the log in status and data from the server
+    login_success_status, data = self.send_login_information(message, host, port, usrname_input, pwd_input)
 
-    if not usrname_input:
-      # client will enter a username
-      usrname_input = input("""
-      Please enter your username to log in: 
-      """)
-
-    time.sleep(0.5)
-    # send over the username to the server
-    self.client.sendto(usrname_input.encode(), (host, port))
-
-    # will receive back confirmation that username was sent successfully
-    data = self.client.recv(1024).decode()
-    if not pwd_input:
-      # client will enter a password
-      pwd_input = input("""
-      Please enter your password to log in: 
-      """)
-
-    time.sleep(0.5)
-    # in the loop, send the password to the server
-    self.client.sendto(pwd_input.encode(), (host, port))
-
-    # server will send back feedback on whether this was a valid login or not
-    data = self.client.recv(1024).decode()
-
-    # stay in for loop until you 
-    while data[:30] != 'You have logged in. Thank you!':
-      
+    # stay in for loop until you have successfully logged in
+    while not login_success_status:
       # allow them to create an account, exit, or try to log in again
       message = input("""We were unable to find an account associated with that username and password combination.
       Please type either 'create' to create a new account,
@@ -159,43 +134,21 @@ class ClientSocket:
 
       # exit- close the connection
       if message.lower().strip() == 'exit':
-        print(f'Connection closed.')
-        self.logged_in = False
-        self.client.close()
-        return False
+        if self.client_exit():
+          return False
 
       # create new account- reroute to that function
       # return what the function returns- it will return the new username
       elif message.lower().strip() == 'create':
-        return self.create_client_username(message, host, port)
+        return self.create_client_username(host, port)
 
-      else: 
-        # requery the client to restart login process
-        inform_status = 'login'
-        self.client.sendto(inform_status.encode(), (host, port))
-        
-        usrname_input = input("""
-        Please enter your username to log in: 
-        """)
-        # send over the username to the server
-        self.client.sendto(usrname_input.encode(), (host, port))
-
-        # will receive back confirmation that username was sent successfully
-        data = self.client.recv(1024).decode()
-
-        pwd_input = input("""
-        Please enter your password to log in: 
-        """)
-
-        # in the loop, send the password to the server
-        self.client.sendto(pwd_input.encode(), (host, port))
-
-        # server will send back feedback on whether this was a valid login or not
-        data = self.client.recv(1024).decode()
-    
+      # requery the client to input their username and password
+      else:
+        login_success_status, data = self.send_login_information('login', host, port)
+       
     # NOW THIS WILL INSTEAD BE the confirmation + str length
     # can exit while loop on success (logged in) or if the loop breaks (with create/exit)
-    if data[:30] == 'You have logged in. Thank you!':
+    if login_success_status:
       # only if logged in, update the variables
       len_msgs = int(data[30:])
 
@@ -216,10 +169,46 @@ class ClientSocket:
 
       # return username of logged in account 
       return self.username
+    
+  def send_login_information(self, message, host, port, usrname_input=None, pwd_input=None):
+    # inform the server that we want to log in
+    self.client.sendto(message.encode(), (host, port))
+
+    if not usrname_input:
+      # client will enter a username
+      usrname_input = input("""
+      Please enter your username to log in: 
+      """)
+
+    time.sleep(0.5)
+    # send over the username to the server
+    self.client.sendto(usrname_input.encode(), (host, port))
+
+    # will receive back confirmation that username was sent successfully
+    self.client.recv(1024).decode()
+    if not pwd_input:
+      # client will enter a password
+      pwd_input = input("""
+      Please enter your password to log in: 
+      """)
+
+    time.sleep(0.5)
+    
+    # in the loop, send the password to the server
+    self.client.sendto(pwd_input.encode(), (host, port))
+
+    # server will send back feedback on whether this was a valid login or not
+    data = self.client.recv(1024).decode()
+    if data[:30] == 'You have logged in. Thank you!':
+      # if the username and password are found by the server, return True
+      return (True, data)
+    else:
+      # If either the username or password are incorrect, return False
+      return (False, data)
 
   # function to delete the client account
   # return True if it was successfully deleted, False otherwise
-  def delete_client_account(self, message, host, port):
+  def delete_client_account(self, host, port):
 
     # send a message that is 'delete' followed by the username to be parsed by the other side
     # we do not have a confirmation to delete as it takes effort to type 'delete' so it is difficult
@@ -228,7 +217,7 @@ class ClientSocket:
     message = "delete" + str(self.username)
     self.client.sendto(message.encode(), (host, port))
     
-    # erver sends back status of whether account was successfully deleted
+    # server sends back status of whether account was successfully deleted
     data = self.client.recv(1024).decode()
     if data == 'Account successfully deleted.':
       self.logged_in = False
@@ -286,6 +275,12 @@ class ClientSocket:
     data = self.client.recv(int(len_msgs)).decode()
 
     return data
+  
+  def client_exit(self):
+    print(f'Connection closed.')
+    self.client.close()
+    self.logged_in = False
+    return True
 
   # this is the main client program that we run- it calls on all subfunctions
   def client_program(self):
@@ -313,14 +308,12 @@ class ClientSocket:
 
         # create function
         elif message.lower().strip() == 'create':
-          self.create_client_username(message, host, port)
+          self.create_client_username(host, port)
       
         # exit function- may want to exit early
         elif message.lower().strip() == 'exit':
-          print(f'Connection closed.')
-          self.client.close()
-          self.logged_in = False
-          break
+          if self.client_exit():
+            break
         
         # if it is none of these key words, it will re query until you enter 'login' or 'create' or 'exit'
 
@@ -346,7 +339,7 @@ class ClientSocket:
             if received_msgs != 'No messages available':
               available_msgs = received_msgs.split('we_love_cs262')[1:]
               self.deliver_available_msgs(available_msgs)
-            self.delete_client_account('delete', host, port)
+            self.delete_client_account(host, port)
             break
 
           # if they ask to create or delete given that you are currently logged in, throw an error
@@ -397,9 +390,7 @@ class ClientSocket:
             available_msgs = received_msgs.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
 
-        self.logged_in = False
-        print(f'Connection closed.')
-        self.client.close()
+        self.client_exit()
 
 # program creates a ClientSocket object and runs client_program which
 # handles input and directs it to the appropriate function
