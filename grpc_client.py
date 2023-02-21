@@ -286,13 +286,33 @@ class ClientSocket:
       return False
 
   def list_accounts(self, client_buf):
-    return True
+    client_buf.action = 'listaccts'
+    send_message(self.client, client_buf)    
+    
+    # note: unlike the non-GRPC protocol, we do not have to send
+    # over the account_list size and then the account_list because
+    # the receive message function accounts for messages of all lengths
+    data = recv_message(self.client, chat_pb2.Data).list_accounts
+
+    return data
   
-  def send_messages(self, client_buf):
-    return True
+  def send_messages(self, client_buf, recipient_username):
+    # populate the client buffer object with necessary inputs
+    client_buf.action = 'sendmsg'
+    client_buf.client_username = self.getUsername()
+    client_buf.recipient_username = recipient_username
+    send_message(self.client, client_buf)
+
+    # will receive information on whether the recipient username was found by server
+    data = recv_message(self.client, chat_pb2.Data).message
+    return data
   
   def receive_messages(self, client_buf):
-    return True
+    client_buf.action = 'msgspls!'
+    client_buf.client_username = self.getUsername()
+    send_message(self.client, client_buf)
+    data = recv_message(self.client, chat_pb2.Data).available_messages
+    return data
 
   # this is the main client program that we run- it calls on all subfunctions
   def client_program(self):
@@ -348,10 +368,11 @@ class ClientSocket:
           # delete account function
           if message.lower().strip() == 'delete':
             # First check if there are remaining msgs
-            client_buf.action = 'msgspls!'
-            client_buf.client_username = self.getUsername()
-            send_message(self.client, client_buf)
-            data = recv_message(self.client, chat_pb2.Data).available_messages
+            data = self.receive_messages(client_buf)
+            # client_buf.action = 'msgspls!'
+            # client_buf.client_username = self.getUsername()
+            # send_message(self.client, client_buf)
+            # data = recv_message(self.client, chat_pb2.Data).available_messages
 
             # deliver messages if available
             if data != 'No messages available':
@@ -373,25 +394,28 @@ class ClientSocket:
 
           # list all account usernames
           elif message.lower().strip() == 'listaccts':
-            client_buf.action = 'listaccts'
-            send_message(self.client, client_buf)    
+            # client_buf.action = 'listaccts'
+            # send_message(self.client, client_buf)    
             
-            # note: unlike the non-GRPC protocol, we do not have to send
-            # over the account_list size and then the account_list because
-            # the receive message function accounts for messages of all lengths
-            data = recv_message(self.client, chat_pb2.Data).list_accounts
+            # # note: unlike the non-GRPC protocol, we do not have to send
+            # # over the account_list size and then the account_list because
+            # # the receive message function accounts for messages of all lengths
+            # data = recv_message(self.client, chat_pb2.Data).list_accounts
+            data = self.list_accounts(client_buf)
+
             print('Usernames: ' + data)
             
           # send message if none of the inputs are key phrases
           else:
             # populate the client buffer object with necessary inputs
-            client_buf.action = 'sendmsg'
-            client_buf.client_username = self.getUsername()
-            client_buf.recipient_username = message
-            send_message(self.client, client_buf)
+            data = self.send_messages(client_buf, message)
+            # client_buf.action = 'sendmsg'
+            # client_buf.client_username = self.getUsername()
+            # client_buf.recipient_username = message
+            # send_message(self.client, client_buf)
 
-            # will receive information on whether the recipient username was found by server
-            data = recv_message(self.client, chat_pb2.Data).message
+            # # will receive information on whether the recipient username was found by server
+            # data = recv_message(self.client, chat_pb2.Data).message
 
             # if username is found, server will return 'User found. What is your message: '
             if data == "User found. Please enter your message: ":
@@ -406,14 +430,15 @@ class ClientSocket:
             print('Message from server: ' + data)
 
           # get all messages that have been delivered to this client
-          client_buf.action = 'msgspls!'
-          client_buf.client_username = self.getUsername()
+          data = self.receive_messages(client_buf)
+          # client_buf.action = 'msgspls!'
+          # client_buf.client_username = self.getUsername()
 
-          # inform server that you want to get new messages
-          send_message(self.client, client_buf)
+          # # inform server that you want to get new messages
+          # send_message(self.client, client_buf)
 
-          # server will send back messages
-          data = recv_message(self.client, chat_pb2.Data).available_messages
+          # # server will send back messages
+          # data = recv_message(self.client, chat_pb2.Data).available_messages
           if data != 'No messages available':
             # deliver available messages if there are any
             available_msgs = data.split('we_love_cs262')[1:]
@@ -431,9 +456,10 @@ class ClientSocket:
         # read undelivered messages for exit
         if message.strip() == 'exit':
           # retrieve messages before exiting
-          client_buf.action = 'msgspls!'
-          send_message(self.client, client_buf)
-          data = recv_message(self.client, chat_pb2.Data).available_messages
+          data = self.receive_messages(client_buf)
+          # client_buf.action = 'msgspls!'
+          # send_message(self.client, client_buf)
+          # data = recv_message(self.client, chat_pb2.Data).available_messages
           if data != 'No messages available':
             available_msgs = data.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
