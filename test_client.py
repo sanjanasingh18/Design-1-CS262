@@ -35,6 +35,7 @@ class TestStringMethods(unittest.TestCase):
     def tearDown(self):
         self.client_socket.client.close()
 
+    # testing our create account function
     def test_create_account(self):
         # test create- see if the username + password are properly updated
         print("Testing the CREATE function")
@@ -43,6 +44,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(expected_password, self.client_socket.getPassword())
 
        
+    # testing our login account function
     def test_login_account(self):
         print("Testing the LOGIN function")
         # test will only pass if you enter the correct password- try it out!
@@ -56,8 +58,9 @@ class TestStringMethods(unittest.TestCase):
         username_logged_into = self.client_socket.login_client_account("login", set_host, set_port, usrname_input=created_username, pwd_input=expected_password)
         self.assertEqual(created_username, username_logged_into)
 
-    def test_incorrect_login_account(self):
-        print('Testing an incorrect password login attempt')
+    # testing logging into an account with an incorrect password
+    def test_incorrect_login_password(self):
+        print('Testing the LOGIN function - incorrect password')
         # test will only pass if you enter an incorrect password- try it out!
         # want to exit out of the account to see whether that works
         created_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
@@ -69,21 +72,38 @@ class TestStringMethods(unittest.TestCase):
         login_status, _ = self.client_socket.send_login_information("login", set_host, set_port, usrname_input=created_username, pwd_input="h")
         self.assertEqual(login_status, False)
 
+    # testing logging into an account with an incorrect username
+    def test_incorrect_login_username(self):
+        print('Testing the LOGIN function - incorrect username')
+        # test will only pass if you enter an incorrect password- try it out!
+        # want to exit out of the account to see whether that works
+        created_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
+        print("Username is:", created_username)
+        # log out of the account
+        self.client_socket.client.send('exit'.encode())
+
+        # fail the log attempt into the account
+        login_status, _ = self.client_socket.send_login_information("login", set_host, set_port, usrname_input="bogus_username", pwd_input=expected_password)
+        self.assertEqual(login_status, False)
+
+    # testing exiting/logging out from your account
     def test_exit_account(self):
         print('Testing the EXIT function')
         # assert that after we have created an account, we can successfully log out/exit.
         self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         self.assertEqual(self.client_socket.client_exit(), True)
 
+    # testing deleting your account
     def test_delete_account(self):
         print("Testing the DELETE function")
         # assert that after we have created an account, it is deleted (returns True)
         self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         self.assertEqual(self.client_socket.delete_client_account(set_host, set_port), True)
     
+    # testing sending messages yourself
     def test_send_messages_to_self(self):
-        # test sending message to yourself. we were unable to 
         print("Testing the SEND MESSAGE function to yourself. ")
+        # create a new user
         sender_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         # send message to yourself
         confirmation_from_server = self.client_socket.send_message(sender_username, set_host, set_port, msg_content=msg_content)
@@ -91,8 +111,10 @@ class TestStringMethods(unittest.TestCase):
         expected_confirmation = "Delivered message '" + msg_content + " ...' to " + sender_username + " from " + sender_username
         self.assertEqual(confirmation_from_server, expected_confirmation)
 
+    # testing recieving messages from yourself
     def test_receive_messages_to_self(self):
         print("Testing the RECEIVE MESSAGE function to yourself.")
+        # create a new test user
         curr_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         # send message to yourself
         self.client_socket.send_message(curr_username, set_host, set_port, msg_content=msg_content)
@@ -101,6 +123,7 @@ class TestStringMethods(unittest.TestCase):
         expected_confirmation = "we_love_cs262" + curr_username + "abc"
         self.assertEqual(confirmation_from_server, expected_confirmation)
 
+    # testing sending messages to another account
     def test_send_messages_to_others(self):
         print("Testing the SEND MESSAGE function to another client.")
         sender_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
@@ -117,6 +140,7 @@ class TestStringMethods(unittest.TestCase):
         # exit other socket
         other_client.client_exit()
 
+    # testing receiving messages from another account
     def test_receive_messages_from_others(self):
         print("Testing the RECEIVE MESSAGE function to another client.")
         recipient_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
@@ -138,11 +162,28 @@ class TestStringMethods(unittest.TestCase):
         # exit other socket
         other_client.client_exit()
 
-    # TODO send message to user that doesn't exit
+    # testing sending messages to an account that does not exist
+    def test_send_messages_to_nonexistent_user(self):
+        print("Testing the SEND MESSAGE function to a bogus client username.")
+        self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
+        time.sleep(1)
 
-    # TODO receive messages if you have none
+        bogus_username = "bogus_client_username"
 
-    # TODO login- incorrect username + correct password
+        confirmation_from_server = self.client_socket.send_message(bogus_username, set_host, set_port, msg_content=msg_content)
+        expected_confirmation = "User not found."
+        self.assertEqual(confirmation_from_server, expected_confirmation)
+
+    # testing receiving messages with no available messages
+    def test_receive_empty_messages(self):
+        print("Testing the RECEIVE MESSAGE function to receive empty messages.")
+        self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
+        time.sleep(1)
+
+        # confirmation you expect to receive 
+        confirmation_from_server = self.client_socket.receive_messages(set_host, set_port)
+        expected_confirmation = "No messages available"
+        self.assertEqual(confirmation_from_server, expected_confirmation)
 
     def test_view_account_list(self):
         print("Testing the VIEW ACCOUNTS function")
