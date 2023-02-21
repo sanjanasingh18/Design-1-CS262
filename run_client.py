@@ -238,6 +238,8 @@ class ClientSocket:
       print("Unsuccessfully deleted account.")
       return False
 
+  # function used to retrieve the list of usernames from the server
+  # returns the list of usernames
   def list_accounts(self, message, host, port):
     self.client.sendto(message.lower().strip().encode(), (host, port))
     # will receive from server the length of the account_list
@@ -251,6 +253,9 @@ class ClientSocket:
     data = self.client.recv(int(len_list)).decode()
     return data
 
+  # function used to send a message to another user!/yourself!
+  # returns a confirmation from the server that the message was delivered,
+  # error message otherwise
   def send_message(self, message, host, port, msg_content = None):
     self.client.sendto(('sendmsg' + self.getUsername() + "_" + message).encode(), (host, port))
     data = self.client.recv(1024).decode()
@@ -264,6 +269,8 @@ class ClientSocket:
       data = self.client.recv(1024).decode()
     return data
 
+  # function used to receive messages from the server
+  # returns available messages
   def receive_messages(self, host, port):
     # inform server that you want to get new messages
     self.client.sendto('msgspls!'.encode(), (host, port))

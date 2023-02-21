@@ -293,6 +293,9 @@ class ClientSocket:
       print("Unsuccessfully deleted account.")
       return False
 
+
+  # function used to retrieve the list of usernames from the server
+  # returns the list of usernames
   def list_accounts(self, client_buf):
     client_buf.action = 'listaccts'
     send_message(self.client, client_buf)    
@@ -304,6 +307,10 @@ class ClientSocket:
 
     return data
   
+
+  # function used to send a message to another user!/yourself!
+  # returns a confirmation from the server that the message was delivered,
+  # error message otherwise
   def send_messages(self, client_buf, recipient_username, msg_content = None):
     # populate the client buffer object with necessary inputs
     client_buf.action = 'sendmsg'
@@ -325,6 +332,8 @@ class ClientSocket:
 
     return data
   
+  # function used to receive messages from the server
+  # returns the messages available 
   def receive_messages(self, client_buf):
     client_buf.action = 'msgspls!'
     client_buf.client_username = self.getUsername()
