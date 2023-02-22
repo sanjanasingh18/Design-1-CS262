@@ -1,5 +1,12 @@
 # Design-1-CS262
 
+To run the the wire version go into the `socket_workable` folder and run `python3 run_server.py` in one terminal and run `python3 run_client.py` in another terminal to create a client. 
+
+To run the the gRPC version go into the `grpc_workable` folder and run `python3 grpc_server.py` in one terminal and run `python3 grpc_client.py` in another terminal to create a client. 
+
+To run socket tests go into `socket_with_tests` and run `python3 test_client.py`.
+To run gRPC tests go into `grpc_with_tests` and run `python3 test_grpc_client.py`.
+
 How to set up the Chat System (1 server, mutliple clients):
 
 Setting up the non-GRPC server-client chat application:
