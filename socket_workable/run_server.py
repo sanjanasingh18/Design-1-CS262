@@ -7,7 +7,7 @@ from _thread import *
 import threading
 from run_client import ClientSocket
 
-set_port = 8886
+set_port = 8888
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 
