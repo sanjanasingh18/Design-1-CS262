@@ -118,7 +118,7 @@ class TestStringMethods(unittest.TestCase):
         curr_username = self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         # send message to yourself
         self.client_socket.send_message(curr_username, set_host, set_port, msg_content=msg_content)
-        # see if the message is received
+        # see if the message is received from the server
         confirmation_from_server = self.client_socket.receive_messages(set_host, set_port)
         expected_confirmation = "we_love_cs262" + curr_username + "abc"
         self.assertEqual(confirmation_from_server, expected_confirmation)
@@ -154,7 +154,7 @@ class TestStringMethods(unittest.TestCase):
         other_client.send_message(recipient_username, set_host, set_port, msg_content=msg_content)
         time.sleep(1)
 
-        # confirmation you expect to receive 
+        # confirmation you expect to receive from the server
         confirmation_from_server = self.client_socket.receive_messages(set_host, set_port)
         expected_confirmation = "we_love_cs262" + other_username + "abc"
         self.assertEqual(confirmation_from_server, expected_confirmation)
@@ -164,19 +164,21 @@ class TestStringMethods(unittest.TestCase):
 
     # testing sending messages to an account that does not exist
     def test_send_messages_to_nonexistent_user(self):
-        print("Testing the SEND MESSAGE function to a bogus client username.")
+        print("Testing the SEND MESSAGE function to a nonexistent client username.")
         self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         time.sleep(1)
 
-        bogus_username = "bogus_client_username"
+        # create nonexistent client username
+        nonexistent_username = "nonexistent_client_username"
 
-        confirmation_from_server = self.client_socket.send_message(bogus_username, set_host, set_port, msg_content=msg_content)
+        # expected confirmation from the server
+        confirmation_from_server = self.client_socket.send_message(nonexistent_username, set_host, set_port, msg_content=msg_content)
         expected_confirmation = "User not found."
         self.assertEqual(confirmation_from_server, expected_confirmation)
 
     # testing receiving messages with no available messages
     def test_receive_empty_messages(self):
-        print("Testing the RECEIVE MESSAGE function to receive empty messages.")
+        print("Testing the RECEIVE MESSAGE function with no available messages.")
         self.client_socket.create_client_username(set_host, set_port, pwd_client=expected_password)
         time.sleep(1)
 
@@ -185,6 +187,7 @@ class TestStringMethods(unittest.TestCase):
         expected_confirmation = "No messages available"
         self.assertEqual(confirmation_from_server, expected_confirmation)
 
+    # testing the view all accounts function
     def test_view_account_list(self):
         print("Testing the VIEW ACCOUNTS function")
 

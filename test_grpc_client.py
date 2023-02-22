@@ -47,7 +47,7 @@ class TestStringMethods(unittest.TestCase):
     def tearDown(self):
         self.client_socket.client.close()
 
-
+    # testing our create account function
     def test_create_account(self):
         # test create- see if the username + password are properly updated
         print("Testing the CREATE function")
@@ -56,6 +56,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(created_username, self.client_socket.getUsername())
         self.assertEqual(expected_password, self.client_socket.getPassword())
 
+    # testing our login account function
     def test_login_account(self):
         print("Testing the LOGIN function")
         # test will only pass if you enter the correct password- try it out!
@@ -63,16 +64,24 @@ class TestStringMethods(unittest.TestCase):
         client_buf = chat_pb2.Data()
         created_username = self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
         print("Username is:", created_username)
-        # log out of the account
 
-        #TODO make this exit function
-        client_buf.action = 'exit'
-        send_message(self.client_socket.client, client_buf)
+        # log out of the account
+        self.client_socket.client_exit()
+
         # log into the account
         username_logged_into = self.client_socket.login_client_account(client_buf, username_input=created_username, pwd_input=expected_password)
         self.assertEqual(created_username, username_logged_into)
+
+    # testing logging out/exiting your account
+    def test_exit_account(self):
+        client_buf = chat_pb2.Data()
+        self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
+        
+        # test that log out of the account returns True
+        self.assertEqual(self.client_socket.client_exit(), True)
     
 
+    # testing deleting your account
     def test_delete_account(self):
         print("Testing the DELETE function")
         client_buf = chat_pb2.Data()
@@ -80,8 +89,8 @@ class TestStringMethods(unittest.TestCase):
         self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
         self.assertEqual(self.client_socket.delete_client_account(client_buf), True)
     
+    # test sending a message to yourself
     def test_send_messages_to_myself(self):
-        # test sending message to yourself. we were unable to 
         print("Testing the SEND MESSAGE function. ")
         client_buf = chat_pb2.Data()
         sender_username = self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
@@ -90,7 +99,8 @@ class TestStringMethods(unittest.TestCase):
         # see if the message was delivered as expected
         expected_confirmation = "Delivered message '" + msg_content + " ...' to " + sender_username + " from " + sender_username
         self.assertEqual(confirmation_from_server, expected_confirmation)
-
+    
+    # testing recieving messages from yourself
     def test_receive_messages_to_myself(self):
         print("Testing the RECEIVE MESSAGE function.")
         client_buf = chat_pb2.Data()
@@ -102,6 +112,7 @@ class TestStringMethods(unittest.TestCase):
         expected_confirmation = "we_love_cs262" + curr_username + "abc"
         self.assertEqual(confirmation_from_server, expected_confirmation)
     
+    # testing sending messages to another account
     def test_send_messages_to_others(self):
         print("Testing the SEND MESSAGE function to another client.")
         client_buf = chat_pb2.Data()
@@ -117,10 +128,9 @@ class TestStringMethods(unittest.TestCase):
         expected_confirmation = "Delivered message '" + msg_content + " ...' to " + other_username + " from " + sender_username
         self.assertEqual(confirmation_from_server, expected_confirmation)
         # exit other socket
-        #TODO make this exit fucntion
-        client_buf.action = 'exit'
-        send_message(other_client.client, client_buf)
+        self.client_socket.client_exit()
 
+    # testing receiving messages from another account
     def test_receive_messages_from_others(self):
         print("Testing the RECEIVE MESSAGE function to another client.")
         client_buf = chat_pb2.Data()
@@ -141,10 +151,40 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(confirmation_from_server, expected_confirmation)
 
         # log out of the other_client account
-        #TODO make this exit fucntion
-        client_buf.action = 'exit'
-        send_message(other_client.client, client_buf)
+        self.client_socket.client_exit()
 
+    # testing sending messages to an account that does not exist
+    def test_send_messages_to_nonexistent_user(self):
+        print("Testing the SEND MESSAGE function to a nonexistent client username.")
+        client_buf = chat_pb2.Data()
+        self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
+        time.sleep(1)
+
+        # create nonexistent client username
+        nonexistent_username = "nonexistent_client_username"
+
+        confirmation_from_server = self.client_socket.send_messages(client_buf, nonexistent_username, msg_content=msg_content)
+        expected_confirmation = "User not found."
+        self.assertEqual(confirmation_from_server, expected_confirmation)
+        # exit other socket
+        self.client_socket.client_exit()
+
+    # testing receiving messages with no available messages
+    def test_receive_empty_messages(self):
+        print("Testing the RECEIVE MESSAGE function with no available messages.")
+        client_buf = chat_pb2.Data()
+        self.client_socket.create_client_username(client_buf, pwd_client=expected_password)
+        time.sleep(1)
+
+        # confirmation you expect to receive from server
+        confirmation_from_server = self.client_socket.receive_messages(client_buf)
+        expected_confirmation = "No messages available"
+        self.assertEqual(confirmation_from_server, expected_confirmation)
+
+        # log out of the other_client account
+        self.client_socket.client_exit()
+
+    # testing the view all accounts function
     def test_view_account_list(self):
         print("Testing the VIEW ACCOUNTS function")
         client_buf = chat_pb2.Data()

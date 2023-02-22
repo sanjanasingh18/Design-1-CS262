@@ -199,10 +199,7 @@ class ClientSocket:
       or type 'login' to attempt to log in again.
       """)
       # exit- close the connection
-      if message.lower().strip() == 'exit':
-        print(f'Connection closed.')
-        self.logged_in = False
-        self.client.close()
+      if message.lower().strip() == 'exit' and self.client_exit():
         return False
         
       # create an account- return the username created
@@ -325,6 +322,12 @@ class ClientSocket:
     send_message(self.client, client_buf)
     data = recv_message(self.client, chat_pb2.Data).available_messages
     return data
+  
+  def client_exit(self):
+    self.logged_in = False
+    print(f'Connection closed.')
+    self.client.close()
+    return True
 
   # this is the main client program that we run- it calls on all subfunctions
   def client_program(self):
@@ -356,11 +359,8 @@ class ClientSocket:
           self.create_client_username(client_buf)
       
         # exit function- may want to exit early
-        elif message.lower().strip() == 'exit':
-          print(f'Connection closed.')
-          self.client.close()
-          self.logged_in = False
-          break
+        elif message.lower().strip() == 'exit' and self.client_exit():
+            break
         
         # if it is none of these key words, it will re query until you enter 'login' or 'create' or 'exit'
 
@@ -450,9 +450,7 @@ class ClientSocket:
             available_msgs = data.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
 
-        self.logged_in = False
-        print(f'Connection closed.')
-        self.client.close()
+        self.client_exit()
 
 # program creates a ClientSocket object and runs client_program which
 # handles input and directs it to the appropriate function
