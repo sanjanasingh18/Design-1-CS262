@@ -2,7 +2,7 @@ import socket
 import uuid
 from _thread import *
 import threading
-from run_client import ClientSocket
+from grpc_client import ClientSocket
 import chat_pb2
 from google.protobuf.internal.encoder import _VarintEncoder
 from google.protobuf.internal.decoder import _DecodeVarint
