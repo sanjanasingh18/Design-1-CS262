@@ -18,9 +18,6 @@ from google.protobuf.internal.encoder import _VarintEncoder
 from google.protobuf.internal.decoder import _DecodeVarint
 
 
-# TODO add exit test, add edge cases for send and receive on client side
-# send to someone who doesn't exist and receive empty messages
-
 set_port = 8888
 set_host = ''
 expected_password = "hi"
@@ -69,7 +66,8 @@ class TestStringMethods(unittest.TestCase):
         print("Username is:", created_username)
 
         # log out of the account
-        self.client_socket.client_exit()
+        client_buf.action = 'exit'
+        send_message(self.client_socket.client, client_buf)
 
         # log into the account
         username_logged_into = self.client_socket.login_client_account(client_buf, username_input=created_username, pwd_input=expected_password)
