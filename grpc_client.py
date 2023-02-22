@@ -199,8 +199,9 @@ class ClientSocket:
       or type 'login' to attempt to log in again.
       """)
       # exit- close the connection
-      if message.lower().strip() == 'exit' and self.client_exit():
-        return False
+      if message.lower().strip() == 'exit':
+        if self.client_exit():
+          return False
         
       # create an account- return the username created
       elif message.lower().strip() == 'create':
@@ -359,7 +360,8 @@ class ClientSocket:
           self.create_client_username(client_buf)
       
         # exit function- may want to exit early
-        elif message.lower().strip() == 'exit' and self.client_exit():
+        elif message.lower().strip() == 'exit':
+          if self.client_exit():
             break
         
         # if it is none of these key words, it will re query until you enter 'login' or 'create' or 'exit'
