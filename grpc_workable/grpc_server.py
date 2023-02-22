@@ -1,5 +1,6 @@
 import socket
 import uuid
+import time
 from _thread import *
 import threading
 from grpc_client import ClientSocket
@@ -7,13 +8,13 @@ import chat_pb2
 from google.protobuf.internal.encoder import _VarintEncoder
 from google.protobuf.internal.decoder import _DecodeVarint
 
-# encode, decode from https://krpc.github.io/krpc/communication-protocols/tcpip.html
+# encode, decode, send_message, recv_message from https://krpc.github.io/krpc/communication-protocols/tcpip.html
 
-set_port = 8887
+set_port = 8888
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 
-#this source code from https://docs.python.org/3/howto/sockets.html
+# reference source code from https://docs.python.org/3/howto/sockets.html
 
 
 def encode_varint(value):
@@ -73,10 +74,9 @@ class Server:
         else:
             self.server = sock
 
-
+    # function to see whether the username is in the accoutn list
     def is_username_valid(self, recipient_username):
-        # cannot be in account_list (must be a unique username)
-        # lock mutex
+        # lock mutex while you access the account_list
         self.account_list_lock.acquire()
         result =  recipient_username in self.account_list
         # unlock mutex
@@ -86,47 +86,54 @@ class Server:
 
     # if the recipient isn't logged in, add the message to the queue
     def add_message_to_queue(self, sender_username, recipient_username, message):
-        # queue format is strings of sender_username + "" + message
+        # queue format is strings of <sender_username + "" + message>
         message_string = sender_username + message
         # lock mutex
         self.account_list_lock.acquire()
+        # add message to queue
+        # TODO- send error message if this doesn't work. Soph can you 
+        # do this, I built out the rest of the functionality for this
         self.account_list.get(recipient_username).addMessage(message_string)
         # unlock mutex
         self.account_list_lock.release()
+        return True
 
     # returns True upon successful delivery. returns False if it fails.
     def deliver_message(self, sender_username, recipient_username, client_buf, conn):
-        # If username is invalid, throw error message
-        if not self.is_username_valid(recipient_username): #== "Recipient username is not valid.":
+        # If username is invalid, print error message + send to Client
+        if not self.is_username_valid(recipient_username): 
             recipient_not_found = "User not found."
             print(recipient_not_found)
             client_buf.message = recipient_not_found
             send_message(conn, client_buf)
-            #conn.sendto(recipient_not_found.encode(), (host, port))
             return False
 
-        # query the client for what the message is
+        # Send a message to the client to enter a message
         confirmed_found_recipient = "User found. Please enter your message: "
-        print(confirmed_found_recipient)
+        print("User found.")
         client_buf.message = confirmed_found_recipient
         send_message(conn, client_buf)
-        #conn.sendto(confirmed_found_recipient.encode(), (host, port))
 
         # server will receive what the message the client wants to send is 
-        # message = conn.recv(1024).decode()
         message = recv_message(conn, chat_pb2.Data).message
 
         # regardless of client status (logged in or not), add the message to the recipient queue
-        self.add_message_to_queue(sender_username, recipient_username, message)
+        if self.add_message_to_queue(sender_username, recipient_username, message): 
 
-        # print + deliver confirmation
-        confirmation_message_sent = 'Delivered message ' + message + " to " + recipient_username + " from " + sender_username
-        print(confirmation_message_sent)
-        client_buf.message = confirmation_message_sent
-        send_message(conn, client_buf)
-        #conn.sendto(confirmation_message_sent.encode(), (host, port))
-        return True
-
+            # print + deliver confirmation- show abridged version of message in the console
+            confirmation_message_sent = "Delivered message '" + message[:50] + " ...' to " + recipient_username + " from " + sender_username
+            print(confirmation_message_sent)
+            client_buf.message = confirmation_message_sent
+            send_message(conn, client_buf)
+            return True
+        
+        # if the message did not deliver, deliver an error message
+        else:
+            message_did_not_work = "Message could not be delivered. Please try again."
+            print(message_did_not_work)
+            client_buf.message = message_did_not_work
+            send_message(conn, client_buf)
+            return False
 
     # function we use to create an account/username for a new user
     def create_username(self, client_buf, conn):
@@ -135,15 +142,11 @@ class Server:
         username = str(uuid.uuid4())
         print("Unique username generated for client is "+ username + ".")
         client_buf.client_username = username
-        print(client_buf, 'client_buf')
 
         send_message(conn, client_buf)
-        # send_message(self.server, client_buf)
-        #conn.sendto(username.encode(), (host, port))
 
         # add (username: clientSocket object where clientSocket includes log-in status,
         # username, password, and queue of undelivered messages
-        # it will initialize a new account
 
         # lock mutex
         self.account_list_lock.acquire()
@@ -153,25 +156,23 @@ class Server:
 
         # client will send back a password + send over confirmation
         pwd = recv_message(conn, chat_pb2.Data).client_password
-        #data = conn.recv(1024).decode()
-        # update the password in the object that is being stored in the dictionary
 
+        # update the password in the object that is being stored in the dictionary
         # lock mutex
         self.account_list_lock.acquire()
         self.account_list.get(username.strip()).setPassword(pwd)
         # unlock mutex
         self.account_list_lock.release()
-
+        
+        # send confirmation that the password was processed by server
         message = "Your password is confirmed to be " + pwd
         client_buf.message = message
         send_message(conn, client_buf)
-        #send_message(self.server, client_buf)
-
-        #conn.sendto(message.encode(), (host, port))
         
         return username
 
-    # send messages to the client that are in the deliver queue
+    # send messages to the client that are in the queue to be delivered for that client
+    # returns what messages are sent over
     def send_client_messages(self, client_username, client_buf, conn, prefix=''):
         # want to receive all undelivered messages
         final_msg = prefix
@@ -180,10 +181,11 @@ class Server:
         # empty messages we may obtain new messages in that time and then empty messages
         # that have not yet been read
 
-        # lock mutex
+        # lock mutex & get messages
         self.account_list_lock.acquire()
         msgs = self.account_list.get(client_username).getMessages()
 
+        # if there are available messages, concatenate them to the final list
         if msgs:
             str_msgs = ''
             for message in msgs:
@@ -191,6 +193,7 @@ class Server:
             final_msg += str_msgs
 
             # clear all delivered messages as soon as possible to address concurent access
+            # clearing so you do not double deliver messages
             self.account_list.get(client_username).emptyMessages()
         else:
             final_msg += "No messages available"
@@ -198,67 +201,68 @@ class Server:
         self.account_list_lock.release()
         
         # note that client_buf.message will have a confirmation that you have logged in as well
+        # if you are running this function within 'login'
+        # send the formatted messages to the client
         client_buf.available_messages = final_msg
         send_message(conn, client_buf)
 
-        #conn.sendto(final_msg.encode(), (host, port))
+        return final_msg
 
 
     # function to log in to an account
+    # Returns the username if the account is logged into, or False otherwise
     def login_account(self, client_buf, conn):
-        username = recv_message(conn, chat_pb2.Data).client_username
-        #username = conn.recv(1024).decode()
-        confirm_received = "Confirming that the username has been received."
-        
-        client_buf.message = confirm_received
-
-        send_message(conn, client_buf)
-        #conn.sendto(confirm_received.encode(), (host, port))
-        
-        password = recv_message(conn, chat_pb2.Data).client_password
-        #password = conn.recv(1024).decode()
         # ask for login and password and then verify if it works
+        time.sleep(1)
 
+        data = recv_message(conn, chat_pb2.Data)
+        username = data.client_username
+        password = data.client_password
         # lock mutex
         self.account_list_lock.acquire()
-
+        # check if username, password pair is valid
         if (username.strip() in self.account_list):
             # get the password corresponding to this
             if password == self.account_list.get(username.strip()).getPassword():
                 # unlock mutex
                 self.account_list_lock.release()
-
+                
+                # send confirmation that you have logged in successfully
                 confirmation = 'You have logged in. Thank you!'
                 client_buf.message = confirmation
                 self.send_client_messages(username.strip(), client_buf, conn)
                 return username.strip()
                 
             else:
+                # send message that you have not logged in
                 # unlock mutex
                 self.account_list_lock.release()
                 print("Account not found.")
                 message = 'Error'
                 client_buf.message = message
                 send_message(conn, client_buf)
-                #conn.sendto(message.encode(), (host, port))
+                return False
 
         elif (username.strip()[5:] in self.account_list):
             # get the password corresponding to this
             if password == self.account_list.get(username.strip()[5:]).getPassword():
                 # unlock mutex
                 self.account_list_lock.release()
+
+                # send confirmation that you have logged in successfully
                 confirmation = 'You have logged in. Thank you!'
                 client_buf.message = confirmation
                 self.send_client_messages(username.strip(), client_buf, conn)
                 return username.strip()[5:]
             else:
+                # send message that you have not logged in
                 # unlock mutex
                 self.account_list_lock.release()
                 print("Account not found.")
                 message = 'Error'
                 client_buf.message = message
                 send_message(conn, client_buf)
-                #conn.sendto(message.encode(), (host, port))
+                return False
 
         else:
             # unlock mutex
@@ -268,34 +272,32 @@ class Server:
             message = 'Error'
             client_buf.message = message
             send_message(conn, client_buf)
-            #conn.sendto(message.encode(), (host, port))
+            return False
 
-
+    # function to delete a client account 
+    # return True if it was successfully deleted, False otherwise
     def delete_account(self, username, client_buf, conn):
-        # You can only delete your account once you are logged in so it handles
+        # You can only delete your account once you are logged in so this handles
         # undelivered messages
-        print('acct list', self.account_list)
-        print('username', username)
         if username in self.account_list:
-            # check if there are any messages in the queue to be delivered
-            # if so, deliver them
+            # delete the account + send a confirmation
             del self.account_list[username]
             print("Successfully deleted client account, remaining accounts: ", self.account_list)
             message = 'Account successfully deleted.'
             client_buf.message = message
             send_message(conn, client_buf)
-            #conn.sendto(message.encode(), (host, port))
+            return True
         else:
             # want to prompt the client to either try again or create account
             message = 'Error deleting account'
             print(message)
             client_buf.message = message
             send_message(conn, client_buf)
-            #conn.sendto(message.encode(), (host, port))
+            return False
 
 
-    # function to list all active (non-deleted) accounts
-    # add a return statement so it is easier to Unittest
+    # function to return all active (non-deleted) accounts
+    # returns the list of accounts
     def list_accounts(self):
         # lock mutex 
         self.account_list_lock.acquire()       
@@ -305,6 +307,7 @@ class Server:
 
         return listed_accounts
 
+    
     def server_to_client(self, host, conn, port):
         curr_user = ''
 
@@ -313,9 +316,6 @@ class Server:
         while True:
             # receive from client
             data = recv_message(conn, chat_pb2.Data)
-            #data = data.action
-            #data = conn.recv(1024).decode()
-
             
             # check if connection closed- if so, close thread
             if not data:
@@ -345,7 +345,6 @@ class Server:
             elif data.action == 'listaccts':
                 client_buf.list_accounts = self.list_accounts()
                 send_message(conn, client_buf)
-                #conn.sendto(self.list_accounts().encode(), (host, port))
 
             elif data.action == "msgspls!":
                 self.send_client_messages(data.client_username, client_buf, conn)
@@ -357,14 +356,13 @@ class Server:
         self.server.listen()
         print('Server is active')
 
-        # while SOMETHING, listen!
+        # Accept new connections and create new threads 
         while True:
             conn, addr = self.server.accept()
 
             print(f'{addr} connected to server.')
 
-            # Start a new thread with this client
-            #start_new_thread(server_to_client, (host, conn, port, ))
+            # Start a new thread with each client
             curr_thread = threading.Thread(target=self.server_to_client, args=(host, conn, port,))
             curr_thread.start()
 
