@@ -7,7 +7,7 @@ from _thread import *
 import threading
 from run_client import ClientSocket
 
-set_port = 8888
+set_port = 8886
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 
@@ -19,7 +19,9 @@ class Server:
         # Create a list of accounts for this server to keep track of clients
         # Format of account_list is [UUID: ClientObject]
         self.account_list = dict()
-        
+        # this commented line was to check that you are able to print account_list usernames
+        # of different lengths
+        # self.account_list['veryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrvvvvvvveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkrveryveryverylongwordgjralkdsfjnajfhgnlasdgnmlejahsgndmjighfjndkgshdnfkmeaijrdghfnkmesjdghnkmjgkmdsijgrndfkmdedsoijgdnkmijsgdnbckmdoseijdkoghjndksoeighufdkoseijfgnxdkoseijgncdkoseijrsgfkmdoewrijfgnckmxdoseijrgfnkdleoijrfgnckmdosfeijrdfkeirjhtungkmfidjenkmrtofgijdnzerawkmlortgifuhjndekwirghufjcnkmdseijrfgndkmseijrgfnckmdxosejirtfgknmdoewaijrtcfgkdxoewajirgfncaghfkdjnahfbdjnsmjfndmsjehrdksehbrsdkmjherbcmvkxdsjhebfcnvkxdioshuerjtkngfdhiuswjbeqnrkfglhdbsanwkeriofghubcjvnxkzsalijwehurbjcnvkxaisdhuwrgjdksaioehurwgdfjknsioehuwcjknvihuxdgsbejrnktfghiodabwjenkr'] = ClientSocket()
         # Mutex lock so only one thread can access account_list at a given time
         # Need this to be a Recursive mutex as some subfunctions call on lock on 
         # top of a locked function
@@ -74,7 +76,7 @@ class Server:
         self.add_message_to_queue(sender_username, recipient_username, message)
 
         # print + deliver confirmation
-        confirmation_message_sent = 'Delivered message ' + message + " to " + recipient_username + " from " + sender_username
+        confirmation_message_sent = "Delivered message '" + message[:50] + " ...' to " + recipient_username + " from " + sender_username
         print(confirmation_message_sent)
         conn.sendto(confirmation_message_sent.encode(), (host, port))
         return True
@@ -119,15 +121,16 @@ class Server:
     def send_client_messages(self, client_username, host, port, conn, prefix=''):
         # prefix is appended to the FRONT of messages to be delivered 
         # prefix is an optional argument as everything is sent as strings
-        final_msg = prefix
+        # prefix is ONLY used in the login function to send conffirmation
 
+        final_msg = ""
         # note that we hold the mutex in this entire area- if we let go of mutex + reacquire to
         # empty messages we may obtain new messages in that time and then empty messages
         # that have not yet been read
 
         # lock mutex
         self.account_list_lock.acquire()
-        
+    
         # get available messages
         msgs = self.account_list.get(client_username).getMessages()
 
@@ -141,11 +144,20 @@ class Server:
             # clear all delivered messages as soon as possible to address concurent access
             self.account_list.get(client_username).emptyMessages()
         else:
-            final_msg += "No messages available"
+            final_msg += "No messages available" 
         # unlock mutex
         self.account_list_lock.release()
+        
 
-        # note that the prefix will always be sent
+        # first send over the length of the message
+        # SEND prefix + length of final msg- there is only a prefix for login 
+        len_msg = prefix + str(len(final_msg))        
+        conn.sendto(len_msg.encode(), (host, port))
+
+        # receive back confirmation from the Client (this is to control info flow)
+        confirmed = conn.recv(1024).decode()
+
+        # then, send over the final message
         conn.sendto(final_msg.encode(), (host, port))
 
 
@@ -236,8 +248,10 @@ class Server:
         listed_accounts = str(list(self.account_list.keys()))
         # unlock mutex
         self.account_list_lock.release()
-
-        return listed_accounts
+        
+        # updated to return the length of the string version of this list
+        # as it will be sent over the wire as a string
+        return len(listed_accounts), listed_accounts
 
     # function that does the heavy lifting of server, client communication
     def server_to_client(self, host, conn, port):
@@ -284,7 +298,14 @@ class Server:
 
             # check if client request is to list all accounts
             elif data.lower().strip()[:9] == 'listaccts':
-                conn.sendto(self.list_accounts().encode(), (host, port))
+                len_list, list_of_accounts = self.list_accounts()
+                # send length of the list accounts function to be sent
+                conn.sendto(str(len_list).encode(), (host, port))
+                # receive confirmation from the Client it is ready for the 
+                # list of accts
+                recieved = conn.recv(1024).decode()
+                # send the list of accounts
+                conn.sendto(list_of_accounts.encode(), (host, port))
 
             # check if client request is to get available messages
             elif data[:8] == "msgspls!":

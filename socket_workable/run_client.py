@@ -4,7 +4,7 @@ import math
 import time
 import uuid
 
-set_port = 8888
+set_port = 8886
 set_host = ''
 # set_host = 'dhcp-10-250-7-238.harvard.edu'
 #[uuid: account info ]
@@ -74,6 +74,11 @@ class ClientSocket:
     # Add a password input
     pwd_client = input('Enter password: ')
 
+    # What if the users do not enter a password? or one that is too long?
+    while len(pwd_client) < 1 or len(pwd_client) > 950:
+      print("Error: password is required to be between 1 and 950 characters")
+      pwd_client = input('Enter password: ')
+
     # Update the password in the client side
     self.password = pwd_client
 
@@ -83,6 +88,7 @@ class ClientSocket:
     # The server will confirm the password
     confirmation_from_server = self.client.recv(1024).decode()
     print(confirmation_from_server)
+    return self.getUsername()
 
   
   # helper function to parse messages as everything is sent as strings
@@ -177,15 +183,25 @@ class ClientSocket:
         # server will send back feedback on whether this was a valid login or not
         data = self.client.recv(1024).decode()
     
+    # NOW THIS WILL INSTEAD BE the confirmation + str length
     # can exit while loop on success (logged in) or if the loop breaks (with create/exit)
     if data[:30] == 'You have logged in. Thank you!':
       # only if logged in, update the variables
+      len_msgs = int(data[30:])
+
+      confirmation_msg = "ok"
+      self.client.sendto(confirmation_msg.encode(), (host, port))
+
+      # retrieve all messages (of the length necessary)
+
+      data = self.client.recv(len_msgs).decode()
+
       print("Successfully logged in.")
       self.logged_in = True
       self.username = usrname_input
 
-      if data[30:] != 'No messages available':
-          available_msgs = data[30:].split('we_love_cs262')[1:]
+      if data != 'No messages available':
+          available_msgs = data.split('we_love_cs262')[1:]
           self.deliver_available_msgs(available_msgs)
 
   # function to delete the client account
@@ -262,8 +278,20 @@ class ClientSocket:
           if message.lower().strip() == 'delete':
             # check remaining msgs
             message = 'msgspls!'
+
+             # inform server that you want to get new messages
             self.client.sendto(message.encode(), (host, port))
-            data = self.client.recv(1024).decode()
+
+            # server will send back the length of messages
+            len_msgs = self.client.recv(1024).decode()
+
+            # send message to control info flow (ensure you are ready to decode msg)
+            message = 'ok'
+            self.client.sendto(message.encode(), (host, port))
+
+            # server will send back messages of proper length
+            data = self.client.recv(int(len_msgs)).decode()
+            
             if data != 'No messages available':
               available_msgs = data.split('we_love_cs262')[1:]
               self.deliver_available_msgs(available_msgs)
@@ -281,7 +309,15 @@ class ClientSocket:
           # list all account usernames
           elif message.lower().strip() == 'listaccts':
             self.client.sendto(message.lower().strip().encode(), (host, port))
-            data = self.client.recv(1024).decode()
+            # will receive from server the length of the account_list
+            len_list = self.client.recv(1024).decode()
+
+            # send confirmation to control input flow
+            message = 'Ok'
+            self.client.sendto(message.encode(), (host, port))
+
+            # Receive the message data- decode the correct length
+            data = self.client.recv(int(len_list)).decode()
             #feedback = self.client.recv(1024).decode()
             print('Usernames: ' + data)
 
@@ -307,8 +343,15 @@ class ClientSocket:
           # inform server that you want to get new messages
           self.client.sendto(message.encode(), (host, port))
 
-          # server will send back messages
-          data = self.client.recv(1024).decode()
+          # server will send back the length of messages
+          len_msgs = self.client.recv(1024).decode()
+
+          # send message to control info flow (ensure you are ready to decode msg)
+          message = 'ok'
+          self.client.sendto(message.encode(), (host, port))
+
+          # server will send back messages of proper length
+          data = self.client.recv(int(len_msgs)).decode()
           if data != 'No messages available':
             # deliver available messages if there are any
             available_msgs = data.split('we_love_cs262')[1:]
@@ -327,8 +370,19 @@ class ClientSocket:
         if message.strip() == 'exit':
           # retrieve messages before exiting
           get_remaining_msgs = 'msgspls!'
+
+          # inform server that you want to get new messages
           self.client.sendto(get_remaining_msgs.encode(), (host, port))
-          data = self.client.recv(1024).decode()
+
+          # server will send back the length of messages
+          len_msgs = self.client.recv(1024).decode()
+
+          # send message to control info flow (ensure you are ready to decode msg)
+          message = 'ok'
+          self.client.sendto(message.encode(), (host, port))
+
+          # server will send back messages of proper length
+          data = self.client.recv(int(len_msgs)).decode()
           if data != 'No messages available':
             available_msgs = data.split('we_love_cs262')[1:]
             self.deliver_available_msgs(available_msgs)
