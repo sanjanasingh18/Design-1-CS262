@@ -68,6 +68,7 @@ class TestStringMethods(unittest.TestCase):
         # log out of the account
         client_buf.action = 'exit'
         send_message(self.client_socket.client, client_buf)
+        self.client_socket.client_exit()
 
         # log into the account
         username_logged_into = self.client_socket.login_client_account(client_buf, username_input=created_username, pwd_input=expected_password)
